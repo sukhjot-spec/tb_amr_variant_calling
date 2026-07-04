@@ -1,1 +1,19 @@
+vcf_all/
+vcf_output/
+vcf_filtered/
+reference/
 
+scratch/
+*.tmp
+*.sra
+*.bam
+*.bai
+*.sam
+*.fastq
+
+__pycache__/
+*.pyc
+*.pyo
+.ipynb_checkpoints/
+
+logs/

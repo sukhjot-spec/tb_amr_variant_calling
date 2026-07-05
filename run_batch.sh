@@ -66,19 +66,16 @@ for id in "${ids[@]}"; do
     [ -f "$BASE/vcf_output/${id}.vcf.gz" ] && already_done=$((already_done+1))
 done
 
-echo "================================================================"
+echo ""
 echo "Batch: $BATCH_NAME"
 echo "Total IDs: $total"
 echo "Already completed (will be skipped): $already_done"
 echo "Remaining: $((total - already_done))"
 echo "Running $PARALLEL_JOBS at a time..."
-echo "================================================================"
 
 chmod +x "$BASE/worker.sh" 2>/dev/null || true
 
 cat "$BATCH_FILE" | parallel -j "$PARALLEL_JOBS" --joblog "$LOG_DIR/${BATCH_NAME}_joblog.tsv" "$BASE/worker.sh" {}
 
-echo "================================================================"
+echo ""
 echo "Batch $BATCH_NAME run finished."
-echo "Run ./check_results.sh $BATCH_NAME to see what succeeded/failed."
-echo "================================================================"

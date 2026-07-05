@@ -24,9 +24,9 @@ n_success=0
 n_fail=0
 n_pending=0
 
-echo "================================================================"
+echo ""
 echo "Results for $BATCH_NAME"
-echo "================================================================"
+echo ""
 
 declare -A fail_reasons
 

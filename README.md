@@ -6,14 +6,14 @@
 ## Table of Contents
 
 1. [Project Overview](#1-project-overview)
-2. [Dataset](#3-dataset)
-3. [Repository Structure](#4-repository-structure)
-4. [Environment Setup](#5-environment-setup)
-5. [Pipeline Architecture](#6-pipeline-architecture)
-6. [Step-by-Step Pipeline Execution](#7-step-by-step-pipeline-execution)
-7. [Tools and Software](#8-tools-and-software)
-8. [Progress Status](#9-progress-status)
-9. [Citation](#10-citation)
+2. [Dataset](#2-dataset)
+3. [Repository Structure](#3-repository-structure)
+4. [Environment Setup](#4-environment-setup)
+5. [Pipeline Architecture](#5-pipeline-architecture)
+6. [Step-by-Step Pipeline Execution](#6-step-by-step-pipeline-execution)
+7. [Tools and Software](#7-tools-and-software)
+8. [Progress Status](#8-progress-status)
+9. [Citation](#9-citation)
 
 ---
 

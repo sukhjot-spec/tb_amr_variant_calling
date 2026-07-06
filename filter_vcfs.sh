@@ -33,7 +33,7 @@ mkdir -p "$BASE/logs"
 > "$LOG_FILE"
 > "$FAIL_LOG"
 
-# --- Count input files ---
+#Count input files
 input_files=("$INPUT_DIR"/*.vcf.gz)
 total=${#input_files[@]}
 

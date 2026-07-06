@@ -57,11 +57,7 @@ t_start=$(date +%s)
 
 for vcf in "${sample_files[@]}"; do
     id=$(basename "$vcf" .vcf.gz)
-    bcftools filter \
-        -e 'QUAL<20 || DP<4' \
-        -Oz \
-        -o "$OUTPUT_DIR/${id}.vcf.gz" \
-        "$vcf" 2>/dev/null
+    bcftools filter -e 'QUAL<20 || DP<4' -Oz -o "$OUTPUT_DIR/${id}.vcf.gz" "$vcf" 2>/dev/null
 done
 
 t_end=$(date +%s)
@@ -94,11 +90,7 @@ for vcf in "${input_files[@]}"; do
     fi
 
     #filtering 
-    bcftools filter \
-        -e 'QUAL<20 || DP<4' \
-        -Oz \
-        -o "$out" \
-        "$vcf" 2>/dev/null
+    bcftools filter -e 'QUAL<20 || DP<4' -Oz -o "$out" "$vcf" 2>/dev/null
 
     if [ $? -ne 0 ] || [ ! -s "$out" ]; then
         echo "FAILED: $id" | tee -a "$FAIL_LOG"

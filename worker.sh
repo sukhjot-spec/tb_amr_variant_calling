@@ -81,11 +81,9 @@ echo "[$ID] Mode detected: $MODE"
 BAM="$SCRATCH/${ID}.sorted.bam"
 
 if [ "$MODE" = "paired" ]; then
-    bwa mem -t 2 -R "@RG\tID:${ID}\tSM:${ID}" "$REF" "$R1" "$R2" 2>"$SCRATCH/bwa.err" \
-        | samtools sort -@ 2 -o "$BAM" - 2>"$SCRATCH/sort.err"
+    bwa mem -t 2 -R "@RG\tID:${ID}\tSM:${ID}" "$REF" "$R1" "$R2" 2>"$SCRATCH/bwa.err" | samtools sort -@ 2 -o "$BAM" - 2>"$SCRATCH/sort.err"
 else
-    bwa mem -t 2 -R "@RG\tID:${ID}\tSM:${ID}" "$REF" "$SE" 2>"$SCRATCH/bwa.err" \
-        | samtools sort -@ 2 -o "$BAM" - 2>"$SCRATCH/sort.err"
+    bwa mem -t 2 -R "@RG\tID:${ID}\tSM:${ID}" "$REF" "$SE" 2>"$SCRATCH/bwa.err" | samtools sort -@ 2 -o "$BAM" - 2>"$SCRATCH/sort.err"
 fi
 
 if [ $? -ne 0 ] || [ ! -s "$BAM" ]; then
@@ -100,8 +98,7 @@ samtools index "$BAM"
 
 #variant calling
 RAW_VCF="$SCRATCH/${ID}.raw.vcf.gz"
-bcftools mpileup -f "$REF" "$BAM" 2>"$SCRATCH/mpileup.err" \
-    | bcftools call -mv -Oz -o "$RAW_VCF" 2>"$SCRATCH/call.err"
+bcftools mpileup -f "$REF" "$BAM" 2>"$SCRATCH/mpileup.err" | bcftools call -mv -Oz -o "$RAW_VCF" 2>"$SCRATCH/call.err"
 if [ $? -ne 0 ] || [ ! -s "$RAW_VCF" ]; then
     fail "bcftools variant calling failed"
 fi

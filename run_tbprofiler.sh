@@ -1,10 +1,11 @@
 #!/bin/bash
 #run_tbprofiler.sh
 #runs TB-Profiler on all filtered VCFs to generate:
-#  - drug resistance predictions that will be the labels for the ML model
+#  - drug resistance predictions which are labels for ml model
 #  - lineage classifications
 #  - compensatory mutation candidates
-#automatic chromosome name fix (NC_000962.3 vs Chromosome mismatch)
+#automatically fixes chromosome naming in VCF headers (NC_000962.3 → Chromosome)
+#uses --caller bcftools (matches how VCFs were generated)
 
 set -uo pipefail
 
@@ -15,11 +16,11 @@ LOG_DIR="$BASE/logs"
 SUCCESS_LOG="$LOG_DIR/tbprofiler_success.log"
 FAIL_LOG="$LOG_DIR/tbprofiler_failed.log"
 
-#activating the vritual environment 
+#activating the virtual environment
 source "$(conda info --base 2>/dev/null)/etc/profile.d/conda.sh" 2>/dev/null || true
 conda activate tb_amr 2>/dev/null || true
 
-#check whether the tb-profiler is installed or not 
+#checking if tb-profiler is installed
 if ! command -v tb-profiler &>/dev/null; then
     echo "TB-Profiler not found. Installing into tb_amr..."
     mamba install -y -n tb_amr -c bioconda tb-profiler
@@ -27,68 +28,33 @@ fi
 
 echo "TB-Profiler version: $(tb-profiler version 2>/dev/null || echo 'unknown')"
 
-#fixing chromosome mismatch
-#TB-Profiler's bundled reference uses "Chromosome" as the chromosome name.
-#but the processed vcfs use "NC_000962.3" because they were aligned to the NCBI H37Rv reference.
-#this fix renames TB-Profiler's internal reference files to match our VCFs.
-#this is a one-time fix as subsequent runs detect it's already done and skip.
+#fixing chromosome names in VCF headers (NC_000962.3 → Chromosome)
+CHR_MAP_FILE="$BASE/reference/chr_map.txt"
+mkdir -p "$(dirname "$CHR_MAP_FILE")"
+echo -e "NC_000962.3\tChromosome" > "$CHR_MAP_FILE"
 
-TBPROFILER_DB="$HOME/miniforge3/envs/tb_amr/share/tbprofiler/who_v2+"
-
-if [ ! -d "$TBPROFILER_DB" ]; then
-    #finding the database directory if not at default path
-    TBPROFILER_DB=$(find "$HOME/miniforge3" -name "genome.fasta" -path "*/tbprofiler/*" 2>/dev/null | head -1 | xargs dirname 2>/dev/null || echo "")
-    if [ -z "$TBPROFILER_DB" ]; then
-        echo "ERROR: Could not find TB-Profiler database directory."
-        echo "Looked in: $HOME/miniforge3/envs/tb_amr/share/tbprofiler/"
-        exit 1
-    fi
+# Check if any VCF still has NC_000962.3 in its *data lines* (not header)
+needs_fix=false
+first_vcf="${INPUT_DIR}/$(ls -1 "$INPUT_DIR"/*.vcf.gz 2>/dev/null | head -1 | xargs basename 2>/dev/null)"
+if [ -n "$first_vcf" ] && zgrep -q "^NC_000962.3" "$INPUT_DIR/$first_vcf" 2>/dev/null; then
+    needs_fix=true
 fi
 
-echo "TB-Profiler database: $TBPROFILER_DB"
-
-#check for whether the fix is already applied
-CURRENT_CHROM=$(head -1 "$TBPROFILER_DB/genome.fasta" 2>/dev/null | tr -d '>')
-
-if [ "$CURRENT_CHROM" = "Chromosome" ]; then
-    echo ""
-    echo "Applying chromosome name fix (Chromosome → NC_000962.3)..."
-
-    # Fix each reference file that contains chromosome names
-    sed -i 's/^>Chromosome/>NC_000962.3/' "$TBPROFILER_DB/genome.fasta"
-    sed -i 's/^Chromosome/NC_000962.3/' "$TBPROFILER_DB/genome.gff"
-    sed -i 's/^Chromosome/NC_000962.3/' "$TBPROFILER_DB/genes.bed"
-    sed -i 's/^Chromosome/NC_000962.3/' "$TBPROFILER_DB/mask.bed"
-    sed -i 's/^Chromosome/NC_000962.3/' "$TBPROFILER_DB/barcode.bed"
-
-    #verifying whether the fix was applied correctly
-    echo "Verifying fix..."
-    all_ok=true
-    for f in genome.fasta genome.gff genes.bed mask.bed barcode.bed; do
-        chrom=$(grep -m1 "NC_000962.3\|Chromosome" "$TBPROFILER_DB/$f" 2>/dev/null | head -c 30)
-        if echo "$chrom" | grep -q "Chromosome"; then
-            echo "  WARNING: $f still contains 'Chromosome' — fix may be incomplete"
-            all_ok=false
-        else
-            echo "  OK: $f → $chrom"
-        fi
+if $needs_fix; then
+    echo "Fixing chromosome names in all VCFs (NC_000962.3 → Chromosome)..."
+    cd "$INPUT_DIR" || exit 1
+    for vcf in *.vcf.gz; do
+        echo "  $vcf"
+        bcftools annotate --rename-chrs "$CHR_MAP_FILE" -Oz -o "${vcf}.tmp" "$vcf" && mv "${vcf}.tmp" "$vcf"
+        bcftools index -f "$vcf" 2>/dev/null
     done
-
-    if [ "$all_ok" = false ]; then
-        echo "ERROR: Chromosome fix incomplete. Check the files manually."
-        exit 1
-    fi
-    echo "Chromosome fix applied successfully."
-
-elif [ "$CURRENT_CHROM" = "NC_000962.3" ]; then
-    echo "Chromosome name already fixed (NC_000962.3) — skipping fix step."
+    echo "Chromosome fix complete."
 else
-    echo "WARNING: Unexpected chromosome name in reference: '$CURRENT_CHROM'"
+    echo "Chromosome names already correct (Chromosome) - skipping rename."
 fi
 
-echo ""
 
-#file steup
+#file setup
 mkdir -p "$OUT_DIR/results" "$LOG_DIR"
 > "$SUCCESS_LOG"
 > "$FAIL_LOG"
@@ -117,7 +83,7 @@ echo "Running speed test on 3 samples to estimate total time..."
 t_start=$(date +%s)
 for vcf in "${input_files[@]:0:3}"; do
     id=$(basename "$vcf" .vcf.gz)
-    tb-profiler profile --vcf "$vcf" --prefix "$id" --dir "$OUT_DIR" --no_trim --caller freebayes 2>/dev/null
+    tb-profiler profile --vcf "$vcf" --prefix "$id" --dir "$OUT_DIR" --no_trim --caller bcftools 2>/dev/null
 done
 t_end=$(date +%s)
 t_elapsed=$((t_end - t_start))
@@ -147,9 +113,8 @@ for vcf in "${input_files[@]}"; do
         continue
     fi
 
-    #running the tb-profiler
-    tb-profiler profile --vcf "$vcf" --prefix "$id" --dir "$OUT_DIR" --no_trim --caller freebayes 2>>"$LOG_DIR/tbprofiler_run.log"
-
+    #running TB-Profiler
+    tb-profiler profile --vcf "$vcf" --prefix "$id" --dir "$OUT_DIR" --no_trim --caller bcftools 2>>"$LOG_DIR/tbprofiler_run.log"
 
     if [ $? -eq 0 ] && [ -f "$result_json" ] && [ -s "$result_json" ]; then
         echo "$id" >> "$SUCCESS_LOG"
@@ -161,17 +126,15 @@ for vcf in "${input_files[@]}"; do
     fi
 
     #progress report after every 50 samples
-    total_processed=$((n_done + n_skipped))
     if [ $((( n_done + n_skipped + n_failed ) % 50)) -eq 0 ]; then
         echo "Progress: $((n_done + n_skipped)) done / $total | Failed: $n_failed"
     fi
 done
 
-#collating all results into one summary table
+#collating all results into a summary table
 echo ""
 echo "Collating all results into summary table..."
 tb-profiler collate --dir "$OUT_DIR" --prefix all_samples --outdir "$OUT_DIR" 2>/dev/null
-
 
 echo ""
 echo "TB-Profiler Complete: $(date)"

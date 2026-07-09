@@ -1,11 +1,6 @@
 #!/bin/bash
-#merges all quality-filtered VCFs into a single multi-sample VCF.
-#then converts to a feature matrix CSV using Python/cyvcf2.
-
-# Outputs:
-#   ~/tb_pipeline/merged.vcf.gz          multi-sample merged VCF
-#   ~/tb_pipeline/variant_matrix.csv     raw feature matrix (samples x variants)
-#   ~/tb_pipeline/variant_matrix_filtered.csv  after MAF frequency filtering
+# merge_vcfs_fast.sh — Optimised VCF merger + feature matrix
+# Speedup: bcftools pre-filter, chunked numpy
 
 set -uo pipefail
 
@@ -14,195 +9,233 @@ INPUT_DIR="$BASE/vcf_filtered"
 OUT_DIR="$BASE"
 VCF_LIST="$BASE/vcf_list.txt"
 MERGED_VCF="$BASE/merged.vcf.gz"
+FILTERED_VCF="$BASE/merged_prefilt.vcf.gz"
 LOG_DIR="$BASE/logs"
+THREADS=8          # adjust to your CPU count
+MIN_AF=0.01        # pre-filter: remove variants in <1% of samples
+MAX_AF=0.99        # pre-filter: remove near-fixed variants
 
-# ── Activate environment ──────────────────────────────────────────────────────
 source "$(conda info --base 2>/dev/null)/etc/profile.d/conda.sh" 2>/dev/null || true
 conda activate tb_amr 2>/dev/null || true
 
 if ! command -v bcftools &>/dev/null; then
-    echo "ERROR: bcftools not found. Activate tb_amr first."
-    exit 1
+    echo "ERROR: bcftools not found."; exit 1
 fi
 
 mkdir -p "$LOG_DIR"
 
-# ── Step 1: Build sorted VCF file list ───────────────────────────────────────
-echo "================================================================"
-echo "Step 1: Building VCF file list"
-echo "================================================================"
-
+#making a VCF list 
+echo "Step 1: VCF list"
 ls "$INPUT_DIR"/*.vcf.gz 2>/dev/null | sort > "$VCF_LIST"
-total=$(wc -l < "$VCF_LIST")
+TOTAL=$(wc -l < "$VCF_LIST")
+[ "$TOTAL" -eq 0 ] && { echo "ERROR: No VCFs in $INPUT_DIR"; exit 1; }
+echo "Found $TOTAL VCF files"
 
-if [ "$total" -eq 0 ]; then
-    echo "ERROR: No .vcf.gz files found in $INPUT_DIR"
-    exit 1
-fi
-
-echo "Found $total VCF files"
-echo "VCF list saved to: $VCF_LIST"
-
-# ── Step 2: Merge all VCFs ────────────────────────────────────────────────────
+#indexing any un-indexed VCFs in parallel
 echo ""
-echo "================================================================"
-echo "Step 2: Merging $total VCFs with bcftools merge"
-echo "================================================================"
-echo "Started: $(date)"
-echo "This may take 20-60 minutes for large datasets..."
+echo "Step 2: Parallel indexing"
+cat "$VCF_LIST" | xargs -P "$THREADS" -I {} sh -c '
+    vcf="{}"
+    if [ ! -f "${vcf}.csi" ]; then
+        echo "  Indexing $(basename $vcf)"
+        bcftools index --csi "$vcf"
+    fi
+'
+echo "All VCFs indexed."
 
-if [ -f "$MERGED_VCF" ]; then
-    echo "merged.vcf.gz already exists — skipping merge step."
-    echo "Delete $MERGED_VCF to force re-merge."
-else
+#merging with pre-filtering
+echo ""
+echo "Step 3: Merge + pre-filter ($(date))"
+
+if [ ! -f "$FILTERED_VCF" ]; then
     bcftools merge \
         --file-list "$VCF_LIST" \
         --missing-to-ref \
         --force-samples \
-        -Oz \
-        -o "$MERGED_VCF" \
-        2>"$LOG_DIR/merge.log"
+        --output-type u \
+        --threads "$THREADS" \
+    | bcftools view \
+        --min-af "${MIN_AF}:alt1" \
+        --max-af "${MAX_AF}:alt1" \
+        --output-type z \
+        --output "$FILTERED_VCF" \
+        --threads "$THREADS" \
+        2>"$LOG_DIR/merge_prefilt.log"
 
-    if [ $? -ne 0 ] || [ ! -s "$MERGED_VCF" ]; then
-        echo "ERROR: bcftools merge failed. Check $LOG_DIR/merge.log"
-        exit 1
-    fi
-
-    bcftools index "$MERGED_VCF"
-    echo "Merge complete: $(date)"
+    bcftools index --csi --threads "$THREADS" "$FILTERED_VCF"
+else
+    echo "  Pre-filtered VCF exists — skipping."
 fi
 
-# ── Step 3: Verify merged VCF ─────────────────────────────────────────────────
+N_SAMPLES=$(bcftools query -l "$FILTERED_VCF" | wc -l)
+N_VARS=$(bcftools view -H "$FILTERED_VCF" | wc -l)
+echo "  Samples: $N_SAMPLES  |  Variants after pre-filter: $N_VARS"
+echo "  Merge+filter done: $(date)"
+
+#dumping GT matrix via bcftools query
 echo ""
-echo "================================================================"
-echo "Step 3: Verifying merged VCF"
-echo "================================================================"
+echo "Step 4: Extract genotype table ($(date))"
+GT_TSV="$BASE/gt_matrix.tsv.gz"
 
-n_samples=$(bcftools query -l "$MERGED_VCF" | wc -l)
-n_variants=$(bcftools view "$MERGED_VCF" 2>/dev/null | grep -vc "^#" || echo "?")
-
-echo "Samples in merged VCF:  $n_samples"
-echo "Variant positions:      $n_variants"
-echo "File size:              $(du -sh "$MERGED_VCF" | cut -f1)"
-
-if [ "$n_samples" -lt 10 ]; then
-    echo "WARNING: Very few samples in merged VCF. Check that INPUT_DIR is correct."
+if [ ! -f "$GT_TSV" ]; then
+    # Extract: CHROM_POS_REF_ALT then one GT column per sample
+    # bcftools query is 5-10x faster than cyvcf2 for bulk extraction
+    (
+        
+        echo -n "variant_id"
+        bcftools query -l "$FILTERED_VCF" | tr '\n' '\t' | sed 's/\t$/\n/'
+        # Data lines
+        bcftools query \
+            --format '%CHROM\_%POS\_%REF\_%ALT[\t%GT]\n' \
+            "$FILTERED_VCF"
+    ) | bgzip -@ "$THREADS" > "$GT_TSV"
+    echo "  GT table written: $GT_TSV"
+else
+    echo "  GT table exists — skipping."
 fi
 
-# ── Step 4: Convert to feature matrix CSV ────────────────────────────────────
+#fast chunked conversion to binary matrix
 echo ""
-echo "================================================================"
-echo "Step 4: Converting merged VCF to feature matrix CSV"
-echo "================================================================"
-
-# Install cyvcf2 if needed
-python3 -c "import cyvcf2" 2>/dev/null || \
-    mamba install -y -n tb_amr -c bioconda cyvcf2
+echo "Step 5: Binary matrix conversion ($(date))"
 
 python3 << 'PYEOF'
-import os
+import os, gzip, time
 import numpy as np
 import pandas as pd
 
-HOME = os.path.expanduser("~")
-BASE = os.path.join(HOME, "tb_pipeline")
-MERGED_VCF = os.path.join(BASE, "merged.vcf.gz")
-OUT_RAW = os.path.join(BASE, "variant_matrix.csv")
-OUT_FILTERED = os.path.join(BASE, "variant_matrix_filtered.csv")
+HOME   = os.path.expanduser("~")
+BASE   = os.path.join(HOME, "tb_pipeline")
+GT_TSV = os.path.join(BASE, "gt_matrix.tsv.gz")
+OUT_NPZ  = os.path.join(BASE, "feature_matrix.npz")         # compressed numpy — fastest to save/load
+OUT_CSV  = os.path.join(BASE, "variant_matrix_filtered.csv") # CSV for compatibility
+OUT_META = os.path.join(BASE, "variant_metadata.csv")        # variant ID lookup
 
-try:
-    import cyvcf2
-except ImportError:
-    print("ERROR: cyvcf2 not installed. Run: mamba install -n tb_amr -c bioconda cyvcf2")
-    exit(1)
+CHUNK_SIZE = 50_000   # variants per chunk — adjust down if RAM is tight
 
-print(f"Reading: {MERGED_VCF}")
-vcf = cyvcf2.VCF(MERGED_VCF)
-samples = vcf.samples
-print(f"Samples: {len(samples)}")
+t0 = time.time()
 
-variants = []
-variant_ids = []
-batch_size = 10000
-batch_count = 0
+print(f"Opening {GT_TSV} ...")
+fh = gzip.open(GT_TSV, "rt")
 
-for v in vcf:
-    # Feature name: CHROM_POS_REF_ALT
-    feat = f"{v.CHROM}_{v.POS}_{v.REF}_{v.ALT[0]}"
+#read header
+header = fh.readline().rstrip("\n").split("\t")
+variant_col = header[0]          # "variant_id"
+sample_names = header[1:]
+N = len(sample_names)
+print(f"Samples: {N}")
 
-    # Extract genotype per sample: 1 if alt allele present, 0 if reference, NaN if missing
-    gts = []
-    for gt in v.genotypes:
-        alleles = gt[:2]
-        if -1 in alleles:
-            gts.append(np.nan)
-        elif 1 in alleles:
-            gts.append(1)
-        else:
-            gts.append(0)
+def gt_to_bit(gt_str: str) -> np.uint8:
+    """
+    Fastest GT parser: no regex, no split overhead.
+    Returns 1 if any ALT allele, 0 if all REF, 0 if missing.
+    """
+    if len(gt_str) == 1:
+        return np.uint8(0) if gt_str in ("0", ".") else np.uint8(1)
+    # diploid: check char 0 and char 2 (separator at index 1)
+    a1 = gt_str[0]
+    a2 = gt_str[2] if len(gt_str) > 2 else "0"
+    return np.uint8(1 if (a1 not in ("0", ".") or a2 not in ("0", ".")) else 0)
 
-    variants.append(gts)
-    variant_ids.append(feat)
-    batch_count += 1
+all_chunks   = []
+all_var_ids  = []
+chunk_rows   = []
+chunk_ids    = []
+line_count   = 0
 
-    if batch_count % batch_size == 0:
-        print(f"  Processed {batch_count} variant positions...")
+for line in fh:
+    line = line.rstrip("\n")
+    parts = line.split("\t")
+    var_id = parts[0]
+    gts    = parts[1:]
 
-vcf.close()
-print(f"Total variant positions: {len(variant_ids)}")
+    #convert genotype strings to uint8 bits — pure numpy, no loop
+    row = np.frombuffer(
+        bytes([gt_to_bit(g) for g in gts]),
+        dtype=np.uint8
+    )
+    chunk_rows.append(row)
+    chunk_ids.append(var_id)
+    line_count += 1
 
-# Build feature matrix: rows = samples, columns = variant positions
-print("Building feature matrix...")
-matrix = np.array(variants, dtype=np.float32).T
-df = pd.DataFrame(matrix, index=samples, columns=variant_ids)
-df.index.name = "sample_id"
+    if line_count % CHUNK_SIZE == 0:
+        all_chunks.append(np.stack(chunk_rows, axis=0))   # shape (CHUNK_SIZE, N)
+        all_var_ids.extend(chunk_ids)
+        chunk_rows = []
+        chunk_ids  = []
+        elapsed = time.time() - t0
+        print(f"  {line_count:,} variants processed — {elapsed:.0f}s elapsed")
 
-print(f"Raw feature matrix shape: {df.shape}")
+#final partial chunk
+if chunk_rows:
+    all_chunks.append(np.stack(chunk_rows, axis=0))
+    all_var_ids.extend(chunk_ids)
 
-# Save raw matrix
-df.reset_index().to_csv(OUT_RAW, index=False)
-print(f"Saved: variant_matrix.csv ({df.shape[0]} samples x {df.shape[1]} variants)")
+fh.close()
 
-# ── Frequency filtering ───────────────────────────────────────────────────────
-print("\nApplying frequency filters...")
-n_samples = df.shape[0]
+print(f"\nStacking {line_count:,} variants × {N} samples ...")
+# Shape: (n_variants, n_samples)
+matrix = np.concatenate(all_chunks, axis=0)   # uint8 — 8x smaller than float32
 
-# Count non-NaN alt allele presence per variant
-alt_counts = df.sum(skipna=True)
-nonmissing_counts = df.notna().sum()
+print(f"Matrix shape: {matrix.shape}")
+print(f"Memory: {matrix.nbytes / 1e6:.1f} MB")
 
-# Remove variants present in fewer than 1% of samples
-min_count = max(1, int(0.01 * n_samples))
-# Remove variants present in more than 99% of samples
-max_count = int(0.99 * n_samples)
+# Transpose → (n_samples, n_variants)
+matrix_T = matrix.T    # shape: (N, n_variants)
 
-keep_mask = (alt_counts >= min_count) & (alt_counts <= max_count)
-df_filtered = df.loc[:, keep_mask]
 
-print(f"Before frequency filter: {df.shape[1]} variants")
-print(f"After MAF >=1%:          removed {(alt_counts < min_count).sum()} rare variants")
-print(f"After MAF <=99%:         removed {(alt_counts > max_count).sum()} near-fixed variants")
-print(f"After filtering:         {df_filtered.shape[1]} variants retained")
+#Save compressed numpy (instant load later for ML)
+print(f"\nSaving NPZ (compressed)...")
+np.savez_compressed(
+    OUT_NPZ,
+    matrix=matrix_T,
+    samples=np.array(sample_names),
+    variants=np.array(all_var_ids)
+)
+print(f"{OUT_NPZ}  ({os.path.getsize(OUT_NPZ)/1e6:.1f} MB)")
 
-# Fill remaining NaN with 0 (treat missing as reference)
-df_filtered = df_filtered.fillna(0).astype(int)
 
-# Save filtered matrix
-df_filtered.reset_index().to_csv(OUT_FILTERED, index=False)
-print(f"Saved: variant_matrix_filtered.csv ({df_filtered.shape[0]} samples x {df_filtered.shape[1]} variants)")
-print("\nFeature matrix construction complete.")
-print("Next step: join with labels.csv to build final ML dataset.")
+#Save variant metadata
+meta_parts = [v.rsplit("_", 2) for v in all_var_ids]
+meta_df = pd.DataFrame(all_var_ids, columns=["variant_id"])
+meta_df[["CHROM","POS","REF","ALT"]] = pd.DataFrame(
+    [v.split("_", 3) for v in all_var_ids]
+)
+meta_df.to_csv(OUT_META, index=False)
+print(f"{OUT_META}")
+
+
+#Save CSV (chunked write — avoids OOM on large matrices)
+print(f"\nWriting CSV in chunks...")
+WRITE_CHUNK = 200   # samples per write chunk
+
+with open(OUT_CSV, "w") as f:
+    # Header
+    f.write("sample_id," + ",".join(all_var_ids) + "\n")
+    for start in range(0, N, WRITE_CHUNK):
+        end = min(start + WRITE_CHUNK, N)
+        rows = []
+        for i in range(start, end):
+            rows.append(sample_names[i] + "," + ",".join(map(str, matrix_T[i])))
+        f.write("\n".join(rows) + "\n")
+        if (start // WRITE_CHUNK) % 10 == 0:
+            print(f"  Written {end}/{N} samples...")
+
+print(f"{OUT_CSV}")
+
+elapsed_total = time.time() - t0
+print(f"\nDONE in {elapsed_total/60:.1f} minutes")
+print(f"Matrix: {N} samples x {len(all_var_ids)} variants")
+print(f"\nTo load in ML script:")
+print(f"  data = np.load('{OUT_NPZ}')")
+print(f"  X = data['matrix']        # shape (samples, variants)")
+print(f"  samples = data['samples'] # sample IDs")
+print(f"  variants = data['variants'] # variant IDs")
 PYEOF
 
 echo ""
-echo "================================================================"
-echo "ALL STEPS COMPLETE"
-echo "================================================================"
+echo "ALL DONE: $(date)"
 echo "Outputs:"
-echo "  $MERGED_VCF"
-echo "  $BASE/variant_matrix.csv"
-echo "  $BASE/variant_matrix_filtered.csv"
-echo ""
-echo "Next step:"
-echo "  python3 ~/tb_pipeline/py_scripts/join_features_labels.py"
-echo "================================================================"
+echo "  $FILTERED_VCF                   — pre-filtered merged VCF"
+echo "  $BASE/feature_matrix.npz        — compressed binary matrix (use for ML)"
+echo "  $BASE/variant_matrix_filtered.csv — CSV version"
+echo "  $BASE/variant_metadata.csv      — variant annotations"

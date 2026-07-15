@@ -1,0 +1,83 @@
+TB-Profiler Collation Summary — Corrected Compensatory Classification
+======================================================================
+
+Total samples parsed : 1858
+Failed files         : 0
+
+Drug Resistance Classification (TB-Profiler drtype)
+--------------------------------------------------
+  Susceptible                        :   711 (38.3%)
+  Pre-XDR-TB                         :   497 (26.7%)
+  MDR-TB                             :   235 (12.6%)
+  XDR-TB                             :   160 (8.6%)
+  RR-TB                              :   115 (6.2%)
+  HR-TB                              :    85 (4.6%)
+  Other                              :    55 (3.0%)
+
+MDR / Pre-XDR / XDR (computed)
+--------------------------------------------------
+  MDR     :   871 (46.9%)
+  Pre-XDR :   641 (34.5%)
+  XDR     :   149 (8.0%)
+  rpoB RRDR confirmed:   976
+
+Lineage Distribution
+--------------------------------------------------
+  lineage4                           :  1266 (68.1%)
+  lineage2                           :   360 (19.4%)
+  lineage3                           :   117 (6.3%)
+  lineage1                           :    63 (3.4%)
+  lineage2;lineage4                  :     7 (0.4%)
+  lineage7                           :     2 (0.1%)
+  lineage5                           :     1 (0.1%)
+  lineage2;lineage3                  :     1 (0.1%)
+
+Per-Drug Resistance Rates
+--------------------------------------------------
+  rifampicin                              :  1006 (54.1%)
+  rifapentine                             :  1006 (54.1%)
+  isoniazid                               :   925 (49.8%)
+  ethambutol                              :   781 (42.0%)
+  pyrazinamide                            :   719 (38.7%)
+  moxifloxacin                            :   672 (36.2%)
+  levofloxacin                            :   672 (36.2%)
+  bedaquiline                             :   211 (11.4%)
+  delamanid                               :    16 (0.9%)
+  pretomanid                              :    16 (0.9%)
+  linezolid                               :     8 (0.4%)
+  streptomycin                            :   525 (28.3%)
+  amikacin                                :   352 (18.9%)
+  kanamycin                               :   358 (19.3%)
+  capreomycin                             :   384 (20.7%)
+  clofazimine                             :   209 (11.2%)
+  ethionamide                             :   598 (32.2%)
+  prothionamide                           :   598 (32.2%)
+  para-aminosalicylic_acid                :     0 (0.0%)
+  cycloserine                             :     0 (0.0%)
+
+Compensatory Mutation Summary (CLEAN SET)
+--------------------------------------------------
+  Total candidate records  : 24718
+  Unique samples affected  : 1274
+  Unique genes             : 13
+
+  Records by gene:
+    rpoC            [rifampicin                    ]: 13713
+    rpoA            [rifampicin                    ]: 5577
+    rpoB            [rpoB non-RRDR                 ]: 1335
+    mmpL5           [bedaquiline/clofazimine       ]: 1335
+    gid             [streptomycin                  ]: 1014
+    kasA            [isoniazid                     ]:  490
+    embR            [ethambutol                    ]:  411
+    gyrB            [fluoroquinolones              ]:  298
+    ndh             [isoniazid                     ]:  255
+    ahpC            [isoniazid                     ]:  120
+    mmpR5           [bedaquiline/clofazimine       ]:   93
+    whiB7           [multiple                      ]:   48
+    eis             [amikacin/kanamycin            ]:   29
+
+rpoB non-RRDR Compensatory Candidates
+--------------------------------------------------
+  Total records : 1335
+  Unique samples: 674
+  Unique changes: 367

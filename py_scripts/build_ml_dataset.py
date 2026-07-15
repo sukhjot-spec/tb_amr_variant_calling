@@ -12,12 +12,12 @@
 
 
 # All issues from file inspection handled:
-#   1. 27,494 multi-allelic variant IDs (comma in ALT) — first ALT kept, deduped
-#   2. SRR11922476 in labels but missing from NPZ — inner join, 1857 samples used
-#   3. 41 null main_lineage values — filled with 'Unknown'
-#   4. compensatory.csv has 17,494 non-MDR records — stratified correctly
-#   5. rpoB_nonRRDR has 187 non-MDR records — flagged, tracked separately
-#   6. Matrix 97.4% sparse — confirmed correct, no fix needed
+#   1. 27,494 multi-allelic variant IDs (comma in ALT) - first ALT kept, deduped
+#   2. SRR11922476 in labels but missing from NPZ - inner join, 1857 samples used
+#   3. 41 null main_lineage values - filled with 'Unknown'
+#   4. compensatory.csv has 17,494 non-MDR records - stratified correctly
+#   5. rpoB_nonRRDR has 187 non-MDR records - flagged, tracked separately
+#   6. Matrix 97.4% sparse
 
 import pandas as pd
 import numpy as np
@@ -41,7 +41,7 @@ matrix      = data["matrix"]
 sample_ids  = data["samples"].tolist()
 variant_ids = data["variants"].tolist()
 
-print(f"  Loaded  : {matrix.shape[0]} samples × {matrix.shape[1]} variants")
+print(f"  Loaded  : {matrix.shape[0]} samples x {matrix.shape[1]} variants")
 print(f"  RAM     : {matrix.nbytes / 1e6:.0f} MB")
 print(f"  dtype   : {matrix.dtype}")
 print(f"  Sparsity: {(matrix == 0).mean() * 100:.1f}% zeros (expected ~97% for WGS SNP data)")
@@ -202,12 +202,11 @@ print(f"  Final matrix         : {matrix_final.shape[0]} samples × {matrix_fina
 print("\n[7/8] Saving outputs...")
 
 # Core numpy arrays
-np.save(os.path.join(ML_OUT, "X_array.npy"),
-        matrix_final.astype(np.uint8))
-np.save(os.path.join(ML_OUT, "y_mdr_array.npy"),     y_mdr)
+np.save(os.path.join(ML_OUT, "X_array.npy"), matrix_final.astype(np.uint8))
+np.save(os.path.join(ML_OUT, "y_mdr_array.npy"), y_mdr)
 np.save(os.path.join(ML_OUT, "y_pre_xdr_array.npy"), y_pre_xdr)
-np.save(os.path.join(ML_OUT, "y_xdr_array.npy"),     y_xdr)
-print(f" X_array.npy              {matrix_final.shape}")
+np.save(os.path.join(ML_OUT, "y_xdr_array.npy"), y_xdr)
+print(f" X_array.npy         {matrix_final.shape}")
 print(f" y_mdr / y_pre_xdr / y_xdr arrays")
 
 # Sample and variant ID lists
@@ -226,8 +225,7 @@ print(f"  y_labels.csv             {labels_aligned.shape}")
 meta     = pd.read_csv(os.path.join(BASE, "variant_metadata.csv"))
 # Fix multi-allelic in metadata ALT, keeping first ALT only
 meta["ALT"] = meta["ALT"].str.split(",").str[0]
-meta["variant_id"] = (meta["CHROM"] + "_" + meta["POS"].astype(str) +
-                      "_" + meta["REF"] + "_" + meta["ALT"])
+meta["variant_id"] = (meta["CHROM"] + "_" + meta["POS"].astype(str) + "_" + meta["REF"] + "_" + meta["ALT"])
 meta_filt = meta[meta["variant_id"].isin(set(variants_final))].drop_duplicates("variant_id")
 meta_filt.to_csv(os.path.join(ML_OUT, "variant_metadata_filtered.csv"), index=False)
 print(f"  variant_metadata_filtered.csv ({len(meta_filt):,} variants)")
@@ -273,9 +271,7 @@ for (gene, change), grp in comp.groupby(["gene", "change"]):
         "non_mdr_without_mutation" : total_non_mdr - non_mdr_w,
         "mdr_frequency"            : round(mdr_w / total_mdr, 6) if total_mdr else 0,
         "non_mdr_frequency"        : round(non_mdr_w / total_non_mdr, 6) if total_non_mdr else 0,
-        "enrichment_ratio"         : round(
-            (mdr_w / total_mdr) / (non_mdr_w / total_non_mdr + 1e-6), 4
-        ),
+        "enrichment_ratio"         : round((mdr_w / total_mdr) / (non_mdr_w / total_non_mdr + 1e-6), 4),
     })
 
 df_enrich = pd.DataFrame(rows).sort_values("enrichment_ratio", ascending=False)

@@ -17,3 +17,11 @@ __pycache__/
 .ipynb_checkpoints/
 
 logs/
+
+tbprofiler_results/results
+tbprofiler_results/vcf
+tbprofiler_results/bam
+tbprofiler_results/other_variants.csv
+
+ml_outputs/X_array.npy
+ml_outputs/X_features.csv

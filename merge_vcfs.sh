@@ -79,7 +79,6 @@ GT_TSV="$BASE/gt_matrix.tsv.gz"
 
 if [ ! -f "$GT_TSV" ]; then
     # Extract: CHROM_POS_REF_ALT then one GT column per sample
-    # bcftools query is 5-10x faster than cyvcf2 for bulk extraction
     (
         
         echo -n "variant_id"

@@ -25,3 +25,5 @@ tbprofiler_results/other_variants.csv
 
 ml_outputs/X_array.npy
 ml_outputs/X_features.csv
+
+intermediate_data/

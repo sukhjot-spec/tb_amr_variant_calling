@@ -24,7 +24,8 @@ import numpy as np
 import os
 import re
 
-BASE   = os.path.expanduser("~/tb_pipeline")
+BASE = os.path.expanduser("~/tb_pipeline")
+INT_DATA = os.path.join(BASE, "intermediate_data")
 ML_OUT = os.path.join(BASE, "ml_outputs")
 TB_OUT = os.path.join(BASE, "tbprofiler_results")
 os.makedirs(ML_OUT, exist_ok=True)
@@ -33,7 +34,7 @@ print("STEP 1: Building ML-Ready Dataset")
 
 #Loading NPZ file
 print("\n[1/8] Loading feature matrix from NPZ...")
-NPZ = os.path.join(BASE, "feature_matrix.npz")
+NPZ = os.path.join(INT_DATA, "feature_matrix.npz")
 assert os.path.exists(NPZ), f"ERROR: Not found: {NPZ}"
 
 data        = np.load(NPZ, allow_pickle=True)

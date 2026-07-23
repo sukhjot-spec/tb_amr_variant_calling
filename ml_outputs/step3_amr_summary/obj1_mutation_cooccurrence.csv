@@ -1,0 +1,16 @@
+mutation_1,mutation_2,samples_with_both,samples_mut1,samples_mut2,pct_of_mut1,pct_of_mut2,jaccard_index
+katG_S315T,embB_M306,615,774,672,79.5,91.5,0.74
+embB_M306,inhA_prom,445,672,578,66.2,77.0,0.553
+katG_S315T,inhA_prom,430,774,578,55.6,74.4,0.466
+katG_S315T,gyrA_A90V,282,774,321,36.4,87.9,0.347
+rpoB_S450L,embB_M306,281,429,672,65.5,41.8,0.343
+katG_S315T,rpoB_S450L,280,774,429,36.2,65.3,0.303
+gyrA_A90V,inhA_prom,267,321,578,83.2,46.2,0.422
+embB_M306,gyrA_A90V,258,672,321,38.4,80.4,0.351
+rpoB_S450L,inhA_prom,189,429,578,44.1,32.7,0.231
+rpoB_S450L,gyrA_A90V,66,429,321,15.4,20.6,0.096
+katG_S315T,rrs_1401,0,774,0,0.0,0.0,0.0
+embB_M306,rrs_1401,0,672,0,0.0,0.0,0.0
+rpoB_S450L,rrs_1401,0,429,0,0.0,0.0,0.0
+gyrA_A90V,rrs_1401,0,321,0,0.0,0.0,0.0
+rrs_1401,inhA_prom,0,0,578,0.0,0.0,0.0

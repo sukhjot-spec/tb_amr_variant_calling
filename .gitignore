@@ -25,6 +25,7 @@ tbprofiler_results/other_variants.csv
 
 ml_outputs/step1_dataset/X_array.npy
 ml_outputs/step1_dataset/X_features.csv
+ml_outputs/step4_models/trained_models
 
 intermediate_data/
 

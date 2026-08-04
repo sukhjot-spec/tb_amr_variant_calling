@@ -1,27 +1,27 @@
 #!/usr/bin/env python3
 """
-objective 1 — Comparative genomic analysis: MDR vs Susceptible
+objective 1 - Comparative genomic analysis: MDR vs Susceptible
 
 inputs (all from ml_outputs/):
-  X_array.npy                        — 1857 x 94583 binary variant matrix
-  y_mdr_array.npy                    — 1857 MDR labels
-  y_labels.csv                       — full labels with lineage, drtype, per-drug
-  feature_names_clean.txt            — 94583 variant IDs
-  variant_metadata_filtered.csv      — CHROM/POS/REF/ALT per variant
-  obj1_mdr_vs_susceptible_comp.csv   — pre-built compensatory enrichment table
-  obj1_compensatory_in_MDR_samples.csv — compensatory records in MDR context
-  obj1_rpoB_nonRRDR_summary.csv      — rpoB non-RRDR candidates
+  X_array.npy                        - 1857 x 94583 binary variant matrix
+  y_mdr_array.npy                    - 1857 MDR labels
+  y_labels.csv                       - full labels with lineage, drtype, per-drug
+  feature_names_clean.txt            - 94583 variant IDs
+  variant_metadata_filtered.csv      - CHROM/POS/REF/ALT per variant
+  obj1_mdr_vs_susceptible_comp.csv   - pre-built compensatory enrichment table
+  obj1_compensatory_in_MDR_samples.csv - compensatory records in MDR context
+  obj1_rpoB_nonRRDR_summary.csv      - rpoB non-RRDR candidates
 
 From tbprofiler_results/:
-  dr_variants.csv                    — known primary DR mutations
+  dr_variants.csv                    - known primary DR mutations
 
 Outputs (all to ml_outputs/):
-  obj1_fisher_all_variants.csv       — all 94583 variants + Fisher p-values
-  obj1_fisher_significant.csv        — FDR < 0.05 variants
-  obj1_fisher_compensatory.csv       — FDR < 0.05 in compensatory genes
-  obj1_known_amr_summary.csv         — known DR mutation frequency table
-  obj1_gene_enrichment_summary.csv   — gene-level enrichment summary
-  obj1_compensatory_fisher.csv       — Fisher test on pre-built comp table
+  obj1_fisher_all_variants.csv       - all 94583 variants + Fisher p-values
+  obj1_fisher_significant.csv        - FDR < 0.05 variants
+  obj1_fisher_compensatory.csv       - FDR < 0.05 in compensatory genes
+  obj1_known_amr_summary.csv         - known DR mutation frequency table
+  obj1_gene_enrichment_summary.csv   - gene-level enrichment summary
+  obj1_compensatory_fisher.csv       - Fisher test on pre-built comp table
 
 (Fisher's test on 94,583 variants)
 """
@@ -35,12 +35,17 @@ import warnings
 warnings.filterwarnings("ignore")
 
 BASE     = os.path.expanduser("~/tb_pipeline")
-ML_OUT   = os.path.join(BASE, "ml_outputs/obj1_outputs")
 TB_OUT   = os.path.join(BASE, "tbprofiler_results")
 REF_DIR  = os.path.join(BASE, "reference")
 GFF_PATH = os.path.join(REF_DIR, "GCF_000195955.2_ASM19595v2_genomic.gff")
 
-#gene set
+# Shared annotation location, one script produces the gene truth, every other step just reads it
+STEP1     = os.path.join(BASE, "ml_outputs", "step1_dataset")   # INPUTS live here
+STEP2_OUT = os.path.join(BASE, "ml_outputs", "step2_comparative")  # OUTPUTS go here
+os.makedirs(STEP2_OUT, exist_ok=True)
+GENE_ANNOTATION_PATH = os.path.join(STEP1, "variant_metadata_with_genes.csv")
+CONFLICTS_PATH       = os.path.join(STEP1, "gene_annotation_conflicts.csv")
+
 COMPENSATORY_GENES = {
     "rpoA", "rpoC",           # rifampicin fitness compensation
     "ahpC", "kasA", "ndh",   # isoniazid pathway
@@ -52,47 +57,56 @@ COMPENSATORY_GENES = {
 }
 
 #tracking rpoB non-RRDR separately
-PRIMARY_DR_GENES = {"rpoB", "katG", "inhA", "embB", "embA", "embC", "pncA", "gyrA", "rrs", "rpsL", "tlyA", "rplC", "fgd1", "dprE1", "pepQ", "Rv0678", "atpE"}
+PRIMARY_DR_GENES = {
+    "rpoB", "katG", "inhA", "embB", "embA", "embC", "pncA", "gyrA",
+    "rrs", "rpsL", "tlyA", "rplC", "fgd1", "dprE1", "pepQ", "Rv0678",
+    "atpE", "ethA",
+}
 
 print("Comparative Genomic Analysis (MDR vs Susceptible)")
 
 # 1. Load all Step 1 outputs
 print("\n[1/8] Loading Step 1 outputs...")
 
-X = np.load(os.path.join(ML_OUT, "X_array.npy"))
-y = np.load(os.path.join(ML_OUT, "y_mdr_array.npy"))
+X = np.load(os.path.join(STEP1, "X_array.npy"))
+y = np.load(os.path.join(STEP1, "y_mdr_array.npy"))
 
-with open(os.path.join(ML_OUT, "feature_names_clean.txt")) as f:
+with open(os.path.join(STEP1, "feature_names_clean.txt")) as f:
     variant_ids = [line.strip() for line in f if line.strip()]
 
-meta   = pd.read_csv(os.path.join(ML_OUT, "variant_metadata_filtered.csv"))
-labels = pd.read_csv(os.path.join(ML_OUT, "y_labels.csv"))
+meta   = pd.read_csv(os.path.join(STEP1, "variant_metadata_filtered.csv"))
+labels = pd.read_csv(os.path.join(STEP1, "y_labels.csv"))
 
 # Objective 1 pre-built files
-comp_enrich = pd.read_csv(os.path.join(ML_OUT, "obj1_mdr_vs_susceptible_comp.csv"))
-comp_mdr    = pd.read_csv(os.path.join(ML_OUT, "obj1_compensatory_in_MDR_samples.csv"))
-rpob_nonRRDR = pd.read_csv(os.path.join(ML_OUT, "obj1_rpoB_nonRRDR_summary.csv"))
+comp_enrich = pd.read_csv(os.path.join(STEP1, "obj1_mdr_vs_susceptible_comp.csv"))
+comp_mdr    = pd.read_csv(os.path.join(STEP1, "obj1_compensatory_in_MDR_samples.csv"))
+rpob_nonRRDR = pd.read_csv(os.path.join(STEP1, "obj1_rpoB_nonRRDR_summary.csv"))
 
 # Validation checks
 assert X.shape[0] == y.shape[0],       "X/y row mismatch"
 assert X.shape[1] == len(variant_ids), "X cols / variant_ids mismatch"
 assert X.shape[0] == len(labels),      "X / labels row mismatch"
 
-print(f"  X              : {X.shape}")
-print(f"  y (MDR)        : {y.shape} | MDR={y.sum()} | non-MDR={(y==0).sum()}")
-print(f"  variant_ids    : {len(variant_ids):,}")
-print(f"  labels         : {labels.shape}")
-print(f"  comp_enrich    : {comp_enrich.shape} ({comp_enrich['gene'].nunique()} genes)")
-print(f"  comp_mdr       : {comp_mdr.shape}")
-print(f"  rpoB_nonRRDR   : {rpob_nonRRDR.shape}")
+print(f"  X: {X.shape}")
+print(f"  y (MDR): {y.shape} | MDR={y.sum()} | non-MDR={(y==0).sum()}")
+print(f"  variant_ids: {len(variant_ids):,}")
+print(f"  labels: {labels.shape}")
+print(f"  comp_enrich: {comp_enrich.shape} ({comp_enrich['gene'].nunique()} genes)")
+print(f"  comp_mdr: {comp_mdr.shape}")
+print(f"  rpoB_nonRRDR: {rpob_nonRRDR.shape}")
 
 X_mdr  = X[y == 1]
 X_susc = X[y == 0]
 n_mdr  = X_mdr.shape[0]
 n_susc = X_susc.shape[0]
 
-# 2 gene annotation from GFF
-print("\n[2/8] Loading gene annotations...")
+#This update fixes an inconsistency between Step 2 and Step 5 by using TB-Profiler as the primary authority 
+#for gene annotations, with GFF serving as a fallback for the ~95% of variants not covered. 
+#Priority is given to TB-Profiler’s dr_variants.csv, followed by compensatory.csv, and then other_variants.csv. 
+#Testing shows this changes gene labels for only 0.86% of variants (818 out of 94,583), mostly at overlapping boundaries 
+#like rpoB/rpoC, gyrA/gyrB, and ethA/ethR. Because Fisher's test p-values and odds ratios are calculated per-variant, 
+#they remain unchanged; only the gene identity, is_compensatory, and is_primary_DR columns are affected.
+print("\n[2/8] Loading gene annotations (TB-Profiler primary + GFF fallback)...")
 
 def parse_gff(gff_path: str) -> pd.DataFrame:
     """Parse H37Rv GFF3 -extract gene name and CDS coordinates."""
@@ -118,6 +132,58 @@ def parse_gff(gff_path: str) -> pd.DataFrame:
     df = df.sort_values("start").reset_index(drop=True)
     return df
 
+def pos_to_gene(pos: int, gff: pd.DataFrame) -> str:
+    """Returns gene name or 'intergenic'. Same tie-break as before:
+    first matching row (ascending start) wins."""
+    hits = gff[(gff["start"] <= pos) & (gff["end"] >= pos)]
+    return hits["gene"].iloc[0] if len(hits) > 0 else "intergenic"
+
+TBPROFILER_SOURCES = [
+    ("dr_variants",    os.path.join(TB_OUT, "dr_variants.csv")),
+    ("compensatory",   os.path.join(TB_OUT, "compensatory.csv")),
+    ("other_variants", os.path.join(TB_OUT, "other_variants.csv")),
+]
+
+def build_tbprofiler_gene_map():
+    """PRIMARY source: pos -> gene, resolved by file authority (dr_variants
+    > compensatory > other_variants) then by majority vote within a file.
+    Returns the map plus a conflicts table for any position where TB-
+    Profiler's own files disagreed with each other."""
+    calls_by_pos = {}
+    for src_name, path in TBPROFILER_SOURCES:
+        if not os.path.exists(path):
+            print(f"  [skip] {src_name}: not found at {path}")
+            continue
+        df = pd.read_csv(path)
+        counts = df.groupby(['pos', 'gene']).size().reset_index(name='n')
+        for pos, sub in counts.groupby('pos'):
+            calls_by_pos.setdefault(pos, {})[src_name] = dict(zip(sub['gene'], sub['n']))
+        print(f"  [ok] {src_name}: {len(df):,} rows, {df['pos'].nunique():,} unique positions")
+
+    pos_gene_map, conflict_rows = {}, []
+    for pos, by_source in calls_by_pos.items():
+        resolved_gene = resolved_from = None
+        for src_name, _ in TBPROFILER_SOURCES:
+            if src_name in by_source:
+                gene_counts   = by_source[src_name]
+                resolved_gene = max(gene_counts.items(), key=lambda kv: kv[1])[0]
+                resolved_from = src_name
+                break
+        pos_gene_map[pos] = resolved_gene
+
+        all_genes_seen = set().union(*[set(gc) for gc in by_source.values()])
+        if len(all_genes_seen) > 1:
+            conflict_rows.append({
+                "pos": pos, "resolved_gene": resolved_gene,
+                "resolved_from": resolved_from, "all_calls": str(by_source),
+            })
+
+    conflicts_df = pd.DataFrame(conflict_rows)
+    print(f"  TB-Profiler positions resolved: {len(pos_gene_map):,}")
+    print(f"  Positions with source disagreement (resolved by file authority): "
+          f"{len(conflicts_df):,}")
+    return pos_gene_map, conflicts_df
+
 USE_GFF = False
 gff_df  = pd.DataFrame(columns=["gene","start","end"])
 
@@ -136,15 +202,22 @@ else:
           f"GCF_000195955.2_ASM19595v2_genomic.gff.gz")
     print(f"  Then rerun this script to get gene-level annotation.")
 
-def pos_to_gene(pos: int, gff: pd.DataFrame) -> str:
-    """Binary search - returns gene name or 'intergenic'."""
-    hits = gff[(gff["start"] <= pos) & (gff["end"] >= pos)]
-    return hits["gene"].iloc[0] if len(hits) > 0 else "intergenic"
+TBPROFILER_GENE_MAP, TBPROFILER_CONFLICTS = build_tbprofiler_gene_map()
+
+def resolve_gene(pos: int) -> tuple:
+    """TB-Profiler primary, GFF fallback. Returns (gene, source)."""
+    tb_gene = TBPROFILER_GENE_MAP.get(pos)
+    if tb_gene is not None:
+        return tb_gene, "tbprofiler"
+    if USE_GFF:
+        gff_gene = pos_to_gene(pos, gff_df)
+        return gff_gene, ("gff" if gff_gene != "intergenic" else "none")
+    return "unannotated", "none"
 
 
-# 3 fisher's exact test on all 94,583 variants
-#    Contingency table for each variant
-#    Null hypothesis: variant frequency is equal in MDR and non-MDR
+#3 fisher's exact test on all 94,583 variants
+#Contingency table for each variant
+#Null hypothesis: variant frequency is equal in MDR and non-MDR
 print(f"\n[3/8] Fisher's exact test on {len(variant_ids):,} variants...")
 print(f"  MDR n={n_mdr} | Non-MDR n={n_susc}")
 print()
@@ -183,7 +256,7 @@ for start in range(0, len(variant_ids), BATCH):
 
 print(f"  Fisher's tests complete ")
 
-# 4 FDR correction - Benjamini-Hochberg
+#4 FDR correction - Benjamini-Hochberg
 print("\n[4/8] Benjamini-Hochberg FDR correction...")
 padj = false_discovery_control(pvalues, method="bh")
 
@@ -192,7 +265,7 @@ print(f"  FDR < 0.01  : {(padj < 0.01).sum():,} variants")
 print(f"  FDR < 0.05  : {(padj < 0.05).sum():,} variants")
 print(f"  FDR < 0.10  : {(padj < 0.10).sum():,} variants")
 
-# 5 making annotated results dataframe
+#5 making annotated results dataframe
 print("\n[5/8] Building annotated results table...")
 
 #parsing variant IDs into components
@@ -223,14 +296,13 @@ results_df["significant_005"] = (padj < 0.05).astype(int)
 results_df["significant_001"] = (padj < 0.01).astype(int)
 results_df["enriched_in"]     = np.where(freq_diff > 0, "MDR",np.where(freq_diff < 0, "Susceptible", "Neither"))
 
-#gene annotation
-if USE_GFF:
-    print("  Annotating variants with gene names from GFF...")
-    results_df["gene"] = results_df["POS"].apply(
-        lambda p: pos_to_gene(p, gff_df)
-    )
-else:
-    results_df["gene"] = "unannotated"
+#gene annotation -- TB-Profiler primary, GFF fallback
+print("  Annotating variants (TB-Profiler primary + GFF fallback)...")
+_resolved = results_df["POS"].apply(resolve_gene)
+results_df["gene"]        = _resolved.apply(lambda t: t[0])
+results_df["gene_source"] = _resolved.apply(lambda t: t[1])
+print(f"  gene_source breakdown: "
+      f"{results_df['gene_source'].value_counts().to_dict()}")
 
 #flag compensatory and primary DR gene variants
 results_df["is_compensatory_gene"] = (results_df["gene"].isin(COMPENSATORY_GENES)).astype(int)
@@ -253,9 +325,9 @@ print(f"  In compensatory genes : {sig_df['is_compensatory_gene'].sum():,}")
 print(f"  In primary DR genes   : {sig_df['is_primary_DR_gene'].sum():,}")
 print(f"  rpoB non-RRDR         : {sig_df['is_rpoB_nonRRDR'].sum():,}")
 
-# 6 fisher's test on pre-built compensatory enrichment table
-#    Uses the 2x2 counts already built in Step 1
-#    Fixes the infinity enrichment_ratio problem with proper p-values
+#6 fisher's test on pre-built compensatory enrichment table
+#Uses the 2x2 counts already built in Step 1
+#Fixes the infinity enrichment_ratio problem with proper p-values
 print("\n[6/8] Fisher's test on compensatory mutation table...")
 
 comp_pvals = []
@@ -289,15 +361,14 @@ comp_enrich = comp_enrich.sort_values("padj_BH").reset_index(drop=True)
 n_comp_sig = comp_enrich["significant_005"].sum()
 print(f"  Significant comp mutations (FDR<0.05): {n_comp_sig:,} / {len(comp_enrich):,}")
 print(f"  Top 10 by significance:")
-top_cols = ["gene","change","drug_context","mdr_frequency",
-            "non_mdr_frequency","odds_ratio_fisher","padj_BH"]
+top_cols = ["gene","change","drug_context","mdr_frequency", "non_mdr_frequency","odds_ratio_fisher","padj_BH"]
 print(comp_enrich[comp_enrich["significant_005"]==1].head(10)[top_cols].to_string(index=False))
 
-# 7. Known AMR mutation summary from dr_variants.csv
+#7. Known AMR mutation summary from dr_variants.csv
 print("\n[7/8] Summarising known AMR mutations...")
 dr = pd.read_csv(os.path.join(TB_OUT, "dr_variants.csv"))
 
-# Restrict to aligned samples only
+#restrict to aligned samples only
 aligned_samples = set(labels["sample_id"])
 dr = dr[dr["sample_id"].isin(aligned_samples)].copy()
 
@@ -363,7 +434,7 @@ if len(sig_df) > 0 and "gene" in sig_df.columns and sig_df["gene"].ne("unannotat
     gene_summary["is_primary_DR"]   = gene_summary["gene"].isin(
         PRIMARY_DR_GENES).astype(int)
 else:
-    # GFF not available — build gene summary from compensatory results only
+    # GFF not available - build gene summary from compensatory results only
     gene_summary = comp_enrich[comp_enrich["significant_005"]==1].groupby("gene").agg(
         n_significant_mutations = ("change", "count"),
         median_mdr_freq         = ("mdr_frequency", "median"),
@@ -379,35 +450,56 @@ else:
 print("\n[8/8] Saving outputs...")
 
 results_df.to_csv(
-    os.path.join(ML_OUT, "obj1_fisher_all_variants.csv"), index=False)
+    os.path.join(STEP2_OUT, "obj1_fisher_all_variants.csv"), index=False)
 print(f"  obj1_fisher_all_variants.csv     ({len(results_df):,} variants)")
 
 sig_df.to_csv(
-    os.path.join(ML_OUT, "obj1_fisher_significant.csv"), index=False)
+    os.path.join(STEP2_OUT, "obj1_fisher_significant.csv"), index=False)
 print(f"  obj1_fisher_significant.csv      ({len(sig_df):,} FDR<0.05)")
 
 comp_sig = sig_df[sig_df["is_compensatory_gene"] == 1]
 comp_sig.to_csv(
-    os.path.join(ML_OUT, "obj1_fisher_compensatory.csv"), index=False)
+    os.path.join(STEP2_OUT, "obj1_fisher_compensatory.csv"), index=False)
 print(f"  obj1_fisher_compensatory.csv     ({len(comp_sig):,} comp gene variants)")
 
 rpob_sig = sig_df[sig_df["is_rpoB_nonRRDR"] == 1]
 rpob_sig.to_csv(
-    os.path.join(ML_OUT, "obj1_fisher_rpoB_nonRRDR.csv"), index=False)
+    os.path.join(STEP2_OUT, "obj1_fisher_rpoB_nonRRDR.csv"), index=False)
 print(f"  obj1_fisher_rpoB_nonRRDR.csv     ({len(rpob_sig):,} rpoB non-RRDR sig)")
 
 comp_enrich.to_csv(
-    os.path.join(ML_OUT, "obj1_compensatory_fisher.csv"), index=False)
+    os.path.join(STEP2_OUT, "obj1_compensatory_fisher.csv"), index=False)
 print(f"  obj1_compensatory_fisher.csv     ({len(comp_enrich):,} mutations, "
       f"{n_comp_sig} significant)")
 
 amr_df.to_csv(
-    os.path.join(ML_OUT, "obj1_known_amr_summary.csv"), index=False)
+    os.path.join(STEP2_OUT, "obj1_known_amr_summary.csv"), index=False)
 print(f"  obj1_known_amr_summary.csv       ({len(amr_df):,} AMR records)")
+
+#shared authoritative gene annotation file is loaded directly by step5_shap's shap_analysis.
+#ipynb to prevent Step 2 and Step 5 from calculating gene calls differently. The output column names—gene, 
+#gene_source, is_compensatory, and is_primary_DR—match exactly what Step 5 expects, even though this 
+#script's own output CSVs retain their original is_compensatory_gene and is_primary_DR_gene names.
+os.makedirs(STEP2_OUT, exist_ok=True)
+shared_annotation = results_df[[
+    "variant_id", "CHROM", "POS", "REF", "ALT",
+    "gene", "gene_source", "is_compensatory_gene", "is_primary_DR_gene",
+]].rename(columns={
+    "is_compensatory_gene": "is_compensatory",
+    "is_primary_DR_gene":   "is_primary_DR",
+})
+shared_annotation.to_csv(GENE_ANNOTATION_PATH, index=False)
+print(f"  variant_metadata_with_genes.csv  ({len(shared_annotation):,} variants) "
+      f"-> {GENE_ANNOTATION_PATH}")
+
+if len(TBPROFILER_CONFLICTS) > 0:
+    TBPROFILER_CONFLICTS.to_csv(CONFLICTS_PATH, index=False)
+    print(f"  gene_annotation_conflicts.csv    ({len(TBPROFILER_CONFLICTS):,} positions) "
+          f"-> {CONFLICTS_PATH}")
 
 if len(gene_summary) > 0:
     gene_summary.to_csv(
-        os.path.join(ML_OUT, "obj1_gene_enrichment_summary.csv"), index=False)
+        os.path.join(STEP2_OUT, "obj1_gene_enrichment_summary.csv"), index=False)
     print(f"  obj1_gene_enrichment_summary.csv ({len(gene_summary):,} genes)")
 
 print("\n" + "=" * 65)
@@ -421,5 +513,4 @@ print(f"  Known AMR pairs            : {len(amr_df):,}")
 
 if not USE_GFF:
     print()
-    print("  !!Gene annotation incomplete — download GFF and rerun")
-    print("  See download command printed in step [2/8]")
+    print("  !!Gene annotation incomplete - download GFF and rerun")

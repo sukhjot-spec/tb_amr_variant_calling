@@ -25,8 +25,14 @@ tbprofiler_results/other_variants.csv
 
 ml_outputs/step1_dataset/X_array.npy
 ml_outputs/step1_dataset/X_features.csv
+ml_outputs/step1_dataset/variant_metadata_with_genes.csv
+ml_outputs/step2_comparative/gene_annotation_conflicts.csv
 ml_outputs/step4_models/trained_models
+ml_outputs/step5_shap/shap_values.npy
+ml_outputs/step5_shap/gene_annotation_conflicts.csv
 
 intermediate_data/
 
 variant_metadata.csv
+
+notebook/shap_analysis_v1.ipynb

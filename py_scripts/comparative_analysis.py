@@ -40,11 +40,11 @@ REF_DIR  = os.path.join(BASE, "reference")
 GFF_PATH = os.path.join(REF_DIR, "GCF_000195955.2_ASM19595v2_genomic.gff")
 
 # Shared annotation location, one script produces the gene truth, every other step just reads it
-STEP1     = os.path.join(BASE, "ml_outputs", "step1_dataset")   # INPUTS live here
-STEP2_OUT = os.path.join(BASE, "ml_outputs", "step2_comparative")  # OUTPUTS go here
+STEP1     = os.path.join(BASE, "ml_outputs", "step1_dataset")   
+STEP2_OUT = os.path.join(BASE, "ml_outputs", "step2_comparative") 
 os.makedirs(STEP2_OUT, exist_ok=True)
-GENE_ANNOTATION_PATH = os.path.join(STEP1, "variant_metadata_with_genes.csv")
-CONFLICTS_PATH       = os.path.join(STEP1, "gene_annotation_conflicts.csv")
+GENE_ANNOTATION_PATH = os.path.join(STEP2_OUT, "variant_metadata_with_genes.csv")
+CONFLICTS_PATH       = os.path.join(STEP2_OUT, "gene_annotation_conflicts.csv")
 
 COMPENSATORY_GENES = {
     "rpoA", "rpoC",           # rifampicin fitness compensation
@@ -109,14 +109,31 @@ n_susc = X_susc.shape[0]
 print("\n[2/8] Loading gene annotations (TB-Profiler primary + GFF fallback)...")
 
 def parse_gff(gff_path: str) -> pd.DataFrame:
-    """Parse H37Rv GFF3 -extract gene name and CDS coordinates."""
+    """Parse H37Rv GFF3 -extract gene name and coordinates.
+    fix: this used to also parse "CDS" records, which share the exact
+    same start/end as their parent "gene" record but can carry a DIFFERENT
+    name attribute. For ~half the genome (genes with no assigned common
+    name, i.e. "hypothetical protein" loci), the gene-line falls back to
+    the real locus tag (e.g. Rv1435c) while the CDS-line falls back to the
+    protein accession instead (e.g. NP_215951.1) -- two different name
+    strings at identical coordinates. Since pandas sort_values() uses an
+    unstable sort by default, which one "won" the position lookup was
+    non-deterministic across runs -- confirmed on real data: 1,993 of
+    3,981 gene intervals (50%) had this exact ambiguity, and it silently
+    changed the gene label on several already-reported top SHAP features
+    between runs. Restricting to "gene"-type records only removes the
+    ambiguity entirely (verified: only 3 CDS-only edge cases genome-wide
+    have no matching gene-type record, a negligible loss) and the gene
+    line's name is always the correct one (real symbol if it has one,
+    otherwise the proper locus tag -- never a protein accession).
+    """
     rows = []
     with open(gff_path) as f:
         for line in f:
             if line.startswith("#"):
                 continue
             parts = line.strip().split("\t")
-            if len(parts) < 9 or parts[2] not in ("gene", "CDS"):
+            if len(parts) < 9 or parts[2] != "gene":
                 continue
             start = int(parts[3])
             end   = int(parts[4])
@@ -129,7 +146,7 @@ def parse_gff(gff_path: str) -> pd.DataFrame:
             if gene:
                 rows.append({"gene": gene, "start": start, "end": end})
     df = pd.DataFrame(rows).drop_duplicates()
-    df = df.sort_values("start").reset_index(drop=True)
+    df = df.sort_values("start", kind="mergesort").reset_index(drop=True)
     return df
 
 def pos_to_gene(pos: int, gff: pd.DataFrame) -> str:

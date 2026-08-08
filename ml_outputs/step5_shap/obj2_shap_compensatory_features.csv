@@ -1,0 +1,1 @@
+feature_idx,variant_id,mean_abs_shap,mean_shap,max_shap,min_shap,pct_nonzero,rank,gene,is_compensatory,is_primary_DR,gene_source

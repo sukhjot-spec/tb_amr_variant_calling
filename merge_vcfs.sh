@@ -81,7 +81,7 @@ if [ ! -f "$GT_TSV" ]; then
     # Extract: CHROM_POS_REF_ALT then one GT column per sample
     (
         
-        echo -n "variant_id"
+        echo -n $'variant_id\t'
         bcftools query -l "$FILTERED_VCF" | tr '\n' '\t' | sed 's/\t$/\n/'
         # Data lines
         bcftools query \

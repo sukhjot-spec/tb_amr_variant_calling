@@ -1,23 +1,23 @@
 gene,change,drug,who_confidence,is_RRDR,total_samples,mdr_samples,susc_samples,overall_freq,mdr_freq,susc_freq
-katG,p.Ser315Thr,isoniazid,Assoc w R,0,760,724,36,0.4093,0.8312,0.0365
-rpoB,p.Ser450Leu,rifampicin,Assoc w R,1,426,385,41,0.2294,0.442,0.0416
-rpoB,p.Ser450Leu,rifapentine,Assoc w R,1,426,385,41,0.2294,0.442,0.0416
-embB,p.Met306Val,ethambutol,Assoc w R,0,377,369,8,0.203,0.4237,0.0081
-gyrA,p.Ala90Val,levofloxacin,Assoc w R,0,321,312,9,0.1729,0.3582,0.0091
-gyrA,p.Ala90Val,moxifloxacin,Assoc w R,0,321,312,9,0.1729,0.3582,0.0091
-rrs,n.1401A>G,capreomycin,Assoc w R,0,320,315,5,0.1723,0.3617,0.0051
-rrs,n.1401A>G,streptomycin,Uncertain significance,0,320,315,5,0.1723,0.3617,0.0051
-rrs,n.1401A>G,kanamycin,Assoc w R,0,320,315,5,0.1723,0.3617,0.0051
-rrs,n.1401A>G,amikacin,Assoc w R,0,320,315,5,0.1723,0.3617,0.0051
-embB,p.Met306Ile,ethambutol,Assoc w R,0,284,273,11,0.1529,0.3134,0.0112
-ethA,c.-11A>G,ethionamide,Uncertain significance,0,272,271,1,0.1465,0.3111,0.001
-ethA,c.-11A>G,prothionamide,Uncertain significance,0,272,271,1,0.1465,0.3111,0.001
-inhA,c.-770T>A,isoniazid,Assoc w R - Interim,0,265,263,2,0.1427,0.302,0.002
-inhA,c.-770T>A,ethionamide,Assoc w R - Interim,0,265,263,2,0.1427,0.302,0.002
-inhA,c.-770T>A,prothionamide,Assoc w R - Interim,0,265,263,2,0.1427,0.302,0.002
-rpoB,p.Leu452Pro,rifapentine,Assoc w R,1,246,233,13,0.1325,0.2675,0.0132
-rpoB,p.Leu452Pro,rifampicin,Assoc w R,1,246,233,13,0.1325,0.2675,0.0132
-pncA,c.456dupC,pyrazinamide,Assoc w R,0,221,221,0,0.119,0.2537,0.0
+katG,p.Ser315Thr,isoniazid,Assoc w R,0,760,724,36,0.409,0.8312,0.0365
+rpoB,p.Ser450Leu,rifampicin,Assoc w R,1,426,385,41,0.2293,0.442,0.0415
+rpoB,p.Ser450Leu,rifapentine,Assoc w R,1,426,385,41,0.2293,0.442,0.0415
+embB,p.Met306Val,ethambutol,Assoc w R,0,377,369,8,0.2029,0.4237,0.0081
+gyrA,p.Ala90Val,levofloxacin,Assoc w R,0,321,312,9,0.1728,0.3582,0.0091
+gyrA,p.Ala90Val,moxifloxacin,Assoc w R,0,321,312,9,0.1728,0.3582,0.0091
+rrs,n.1401A>G,capreomycin,Assoc w R,0,320,315,5,0.1722,0.3617,0.0051
+rrs,n.1401A>G,streptomycin,Uncertain significance,0,320,315,5,0.1722,0.3617,0.0051
+rrs,n.1401A>G,kanamycin,Assoc w R,0,320,315,5,0.1722,0.3617,0.0051
+rrs,n.1401A>G,amikacin,Assoc w R,0,320,315,5,0.1722,0.3617,0.0051
+embB,p.Met306Ile,ethambutol,Assoc w R,0,284,273,11,0.1529,0.3134,0.0111
+ethA,c.-11A>G,ethionamide,Uncertain significance,0,272,271,1,0.1464,0.3111,0.001
+ethA,c.-11A>G,prothionamide,Uncertain significance,0,272,271,1,0.1464,0.3111,0.001
+inhA,c.-770T>A,isoniazid,Assoc w R - Interim,0,265,263,2,0.1426,0.302,0.002
+inhA,c.-770T>A,ethionamide,Assoc w R - Interim,0,265,263,2,0.1426,0.302,0.002
+inhA,c.-770T>A,prothionamide,Assoc w R - Interim,0,265,263,2,0.1426,0.302,0.002
+rpoB,p.Leu452Pro,rifapentine,Assoc w R,1,246,233,13,0.1324,0.2675,0.0132
+rpoB,p.Leu452Pro,rifampicin,Assoc w R,1,246,233,13,0.1324,0.2675,0.0132
+pncA,c.456dupC,pyrazinamide,Assoc w R,0,221,221,0,0.1189,0.2537,0.0
 rpoB,p.Asp435Gly,rifapentine,Assoc w R - Interim,1,193,193,0,0.1039,0.2216,0.0
 rpoB,p.Asp435Gly,rifampicin,Assoc w R - Interim,1,193,193,0,0.1039,0.2216,0.0
 rrs,n.514A>C,streptomycin,Assoc w R,0,177,171,6,0.0953,0.1963,0.0061
@@ -29,21 +29,21 @@ gid,p.Leu79Ser,streptomycin,Uncertain significance,0,162,160,2,0.0872,0.1837,0.0
 gyrA,p.Asp94Gly,levofloxacin,Assoc w R,0,162,153,9,0.0872,0.1757,0.0091
 ethA,p.Ala381Pro,ethionamide,Uncertain significance,0,161,159,2,0.0867,0.1825,0.002
 ethA,p.Ala381Pro,prothionamide,Uncertain significance,0,161,159,2,0.0867,0.1825,0.002
-inhA,c.-777C>T,ethionamide,Assoc w R,0,155,140,15,0.0835,0.1607,0.0152
-inhA,c.-777C>T,isoniazid,Assoc w R,0,155,140,15,0.0835,0.1607,0.0152
-inhA,c.-777C>T,prothionamide,Assoc w R,0,155,140,15,0.0835,0.1607,0.0152
+inhA,c.-777C>T,ethionamide,Assoc w R,0,155,140,15,0.0834,0.1607,0.0152
+inhA,c.-777C>T,isoniazid,Assoc w R,0,155,140,15,0.0834,0.1607,0.0152
+inhA,c.-777C>T,prothionamide,Assoc w R,0,155,140,15,0.0834,0.1607,0.0152
 rpsL,p.Lys43Arg,streptomycin,Assoc w R,0,143,131,12,0.077,0.1504,0.0122
-rpoB,p.Asp435Val,rifampicin,Assoc w R,1,124,119,5,0.0668,0.1366,0.0051
-rpoB,p.Asp435Val,rifapentine,Assoc w R,1,124,119,5,0.0668,0.1366,0.0051
-inhA,c.-779G>T,ethionamide,Assoc w R - Interim,0,108,106,2,0.0582,0.1217,0.002
-inhA,c.-779G>T,prothionamide,Assoc w R - Interim,0,108,106,2,0.0582,0.1217,0.002
-inhA,c.-779G>T,isoniazid,Assoc w R - Interim,0,108,106,2,0.0582,0.1217,0.002
+rpoB,p.Asp435Val,rifampicin,Assoc w R,1,124,119,5,0.0667,0.1366,0.0051
+rpoB,p.Asp435Val,rifapentine,Assoc w R,1,124,119,5,0.0667,0.1366,0.0051
+inhA,c.-779G>T,ethionamide,Assoc w R - Interim,0,108,106,2,0.0581,0.1217,0.002
+inhA,c.-779G>T,prothionamide,Assoc w R - Interim,0,108,106,2,0.0581,0.1217,0.002
+inhA,c.-779G>T,isoniazid,Assoc w R - Interim,0,108,106,2,0.0581,0.1217,0.002
 pncA,p.Cys14Arg,pyrazinamide,Assoc w R,0,89,87,2,0.0479,0.0999,0.002
 embB,p.Gln497Lys,ethambutol,Assoc w R,0,84,81,3,0.0452,0.093,0.003
-embB,p.Gln497Arg,ethambutol,Assoc w R,0,77,77,0,0.0415,0.0884,0.0
+embB,p.Gln497Arg,ethambutol,Assoc w R,0,77,77,0,0.0414,0.0884,0.0
 pncA,c.517dupG,pyrazinamide,Assoc w R,0,72,71,1,0.0388,0.0815,0.001
-mmpR5,c.144dupC,bedaquiline,Assoc w R,0,64,49,15,0.0345,0.0563,0.0152
-mmpR5,c.144dupC,clofazimine,Assoc w R,0,64,49,15,0.0345,0.0563,0.0152
+mmpR5,c.144dupC,bedaquiline,Assoc w R,0,64,49,15,0.0344,0.0563,0.0152
+mmpR5,c.144dupC,clofazimine,Assoc w R,0,64,49,15,0.0344,0.0563,0.0152
 gyrA,p.Ser91Pro,levofloxacin,Assoc w R,0,60,58,2,0.0323,0.0666,0.002
 rpsL,p.Lys88Arg,streptomycin,Assoc w R,0,60,57,3,0.0323,0.0654,0.003
 gyrA,p.Ser91Pro,moxifloxacin,Assoc w R,0,60,58,2,0.0323,0.0666,0.002
@@ -58,10 +58,10 @@ inhA,c.-154G>A,ethionamide,Assoc w R - Interim,0,48,46,2,0.0258,0.0528,0.002
 inhA,p.Ile21Thr,prothionamide,Uncertain significance,0,46,46,0,0.0248,0.0528,0.0
 inhA,p.Ile21Thr,ethionamide,Uncertain significance,0,46,46,0,0.0248,0.0528,0.0
 inhA,p.Ile21Thr,isoniazid,Uncertain significance,0,46,46,0,0.0248,0.0528,0.0
-gyrA,p.Asp94Asn,moxifloxacin,Assoc w R,0,43,42,1,0.0232,0.0482,0.001
-rpoB,p.Leu430Pro,rifampicin,Assoc w R,1,43,19,24,0.0232,0.0218,0.0243
-rpoB,p.Leu430Pro,rifapentine,Assoc w R,1,43,19,24,0.0232,0.0218,0.0243
-gyrA,p.Asp94Asn,levofloxacin,Assoc w R,0,43,42,1,0.0232,0.0482,0.001
+gyrA,p.Asp94Asn,moxifloxacin,Assoc w R,0,43,42,1,0.0231,0.0482,0.001
+rpoB,p.Leu430Pro,rifampicin,Assoc w R,1,43,19,24,0.0231,0.0218,0.0243
+rpoB,p.Leu430Pro,rifapentine,Assoc w R,1,43,19,24,0.0231,0.0218,0.0243
+gyrA,p.Asp94Asn,levofloxacin,Assoc w R,0,43,42,1,0.0231,0.0482,0.001
 inhA,p.Ile194Thr,isoniazid,Uncertain significance,0,42,39,3,0.0226,0.0448,0.003
 inhA,p.Ile194Thr,prothionamide,Uncertain significance,0,42,39,3,0.0226,0.0448,0.003
 inhA,p.Ile194Thr,ethionamide,Uncertain significance,0,42,39,3,0.0226,0.0448,0.003
@@ -71,7 +71,7 @@ pncA,p.Tyr34Asp,pyrazinamide,Assoc w R,0,35,35,0,0.0188,0.0402,0.0
 pncA,p.Leu151Ser,pyrazinamide,Assoc w R,0,35,35,0,0.0188,0.0402,0.0
 pncA,p.Gly97Asp,pyrazinamide,Assoc w R,0,31,31,0,0.0167,0.0356,0.0
 pncA,p.His71Tyr,pyrazinamide,Assoc w R,0,31,28,3,0.0167,0.0321,0.003
-tlyA,c.585_588delTGGG,capreomycin,Assoc w R,0,30,29,1,0.0162,0.0333,0.001
+tlyA,c.585_588delTGGG,capreomycin,Assoc w R,0,30,29,1,0.0161,0.0333,0.001
 rpoB,p.Ile491Phe,rifampicin,Assoc w R,0,29,29,0,0.0156,0.0333,0.0
 rpoB,p.Ile491Phe,rifapentine,Assoc w R,0,29,29,0,0.0156,0.0333,0.0
 ethA,c.869dupA,ethionamide,Assoc w R,0,27,27,0,0.0145,0.031,0.0
@@ -119,12 +119,12 @@ pncA,p.Ser59Pro,pyrazinamide,Assoc w R,0,20,19,1,0.0108,0.0218,0.001
 rpoB,p.Asp435Tyr,rifampicin,Assoc w R,1,20,14,6,0.0108,0.0161,0.0061
 pncA,c.375_389delCGATGAGGTCGATGT,pyrazinamide,Assoc w R - Interim,0,20,20,0,0.0108,0.023,0.0
 gid,p.Ala134Glu,streptomycin,Assoc w R,0,20,19,1,0.0108,0.0218,0.001
-embB,p.Ala388Gly,ethambutol,,0,19,1,18,0.0102,0.0011,0.0183
-rpoB,p.His445Asn,rifapentine,Assoc w R,1,18,7,11,0.0097,0.008,0.0112
-rpoB,p.His445Asn,rifampicin,Assoc w R,1,18,7,11,0.0097,0.008,0.0112
+embB,p.Ala388Gly,ethambutol,,0,19,1,18,0.0102,0.0011,0.0182
+rpoB,p.His445Asn,rifapentine,Assoc w R,1,18,7,11,0.0097,0.008,0.0111
+rpoB,p.His445Asn,rifampicin,Assoc w R,1,18,7,11,0.0097,0.008,0.0111
 mmpR5,c.141_142dupTC,bedaquiline,Assoc w R,0,18,15,3,0.0097,0.0172,0.003
 mmpR5,c.141_142dupTC,clofazimine,Assoc w R,0,18,15,3,0.0097,0.0172,0.003
-panD,p.Val138Ala,pyrazinamide,,0,17,1,16,0.0092,0.0011,0.0162
+panD,p.Val138Ala,pyrazinamide,,0,17,1,16,0.0091,0.0011,0.0162
 ethR,p.Ala95Thr,ethionamide,Uncertain significance,0,16,14,2,0.0086,0.0161,0.002
 mmpR5,c.424dupC,clofazimine,Assoc w R,0,16,15,1,0.0086,0.0172,0.001
 ethR,p.Ala95Thr,prothionamide,Uncertain significance,0,16,14,2,0.0086,0.0161,0.002

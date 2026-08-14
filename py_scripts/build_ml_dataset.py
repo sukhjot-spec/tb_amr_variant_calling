@@ -13,9 +13,15 @@
 
 # All issues from file inspection handled:
 #   1. 27,494 multi-allelic variant IDs (comma in ALT) - first ALT kept, deduped
-#   2. SRR11922476 in labels but missing from NPZ - inner join, 1857 samples used
+#   2. Sample alignment - inner join on sample_id between NPZ and labels.csv
+#      (all 1,858 samples now present in both after the merge_vcfs.sh header fix;
+#      the join is dynamic and will correctly report/exclude any future mismatch)
 #   3. 41 null main_lineage values - filled with 'Unknown'
-#   4. compensatory.csv has 17,494 non-MDR records - stratified correctly
+#   4. compensatory.csv's MDR-conditional classification silently drops non-MDR
+#      carriers from the table for most genes (not a join bug -- collate.py's own
+#      classification logic). Fixed by sourcing the MDR-vs-non-MDR comparison from
+#      other_variants.csv (unfiltered by MDR status) instead, restricted to the
+#      compensatory gene panel.
 #   5. rpoB_nonRRDR has 187 non-MDR records - flagged, tracked separately
 #   6. Matrix 97.4% sparse
 
@@ -137,8 +143,9 @@ for lin, cnt in labels["main_lineage"].value_counts().head(8).items():
     print(f"    {lin}: {cnt} ({cnt/len(labels)*100:.1f}%)")
 
 #aligning samples
-#    issue: SRR11922476 in labels but NOT in NPZ (1858 labels, 1857 NPZ)
-#    SRR11922476 excluded
+#    ID-based inner join on sample_id between NPZ and labels -- reports
+#    (and excludes) any sample present in only one source, dynamically,
+#    rather than assuming a fixed exclusion
 print("\n[4/8] Aligning samples...")
 labels_idx     = labels.set_index("sample_id")
 feature_set    = set(sample_ids)
@@ -234,16 +241,21 @@ print(f"  variant_metadata_filtered.csv ({len(meta_filt):,} variants)")
 #Objective 1: Compensatory mutation summaries
 print("\n  Building Objective 1 compensatory summaries...")
 
-# FIX (see conversation record): compensatory.csv's own MDR-conditional classification logic (collate.py) drops non-MDR carriers from the table
-# entirely for genes with requires_mdr=True - it's not a positional/join bug, it's compensatory.csv being the wrong INPUT for an MDR-vs-non-MDR
-# comparison. Verified directly: compensatory.csv's median non-MDR carrier count per mutation was 2 (mean 5.9, 27.5% of entries exactly 0) vs the
-# X_array.npy-matrix-based ground truth's median of 27 (mean 30.9, only 0.6% at 0) for the same variants. other_variants.csv has every sample's
-# genotype call unfiltered by MDR status - use that instead, restricted to the compensatory gene panel. rpoB is deliberately excluded from that
-# panel: its presence in compensatory.csv is entirely the separate non-RRDR-in-MDR-context pathway (verified identical to rpoB_nonRRDR.csv,
-# 1,335/1,335 rows match exactly), already loaded independently below via `rpob` - including it here would double-count against that and also
-# silently broaden the rpoB definition beyond what rpoB_nonRRDR.csv means
-
-
+# FIX (see conversation record): compensatory.csv's own MDR-conditional
+# classification logic (collate.py) drops non-MDR carriers from the table
+# entirely for genes with requires_mdr=True -- it's not a positional/join
+# bug, it's compensatory.csv being the wrong INPUT for an MDR-vs-non-MDR
+# comparison. Verified directly: compensatory.csv's median non-MDR carrier
+# count per mutation was 2 (mean 5.9, 27.5% of entries exactly 0) vs the
+# X_array.npy-matrix-based ground truth's median of 27 (mean 30.9, only
+# 0.6% at 0) for the same variants. other_variants.csv has every sample's
+# genotype call unfiltered by MDR status -- use that instead, restricted
+# to the compensatory gene panel. rpoB is deliberately excluded from that
+# panel: its presence in compensatory.csv is entirely the separate
+# non-RRDR-in-MDR-context pathway (verified identical to rpoB_nonRRDR.csv,
+# 1,335/1,335 rows match exactly), already loaded independently below via
+# `rpob` -- including it here would double-count against that and also
+# silently broaden the rpoB definition beyond what rpoB_nonRRDR.csv means.
 comp_old = pd.read_csv(os.path.join(TB_OUT, "compensatory.csv"))
 comp_gene_panel = sorted(set(comp_old["gene"].unique()) - {"rpoB"})
 print(f"  Compensatory gene panel ({len(comp_gene_panel)} genes): {comp_gene_panel}")
@@ -348,7 +360,8 @@ for idx in top5:
           f"{susc_m[idx]:>9.3f} {diff[idx]:>7.3f}")
 
 print("Complete")
-print(f"  Samples  : {X_.shape[0]} (1 excluded — SRR11922476, no VCF in NPZ)")
+excl_note = f"{len(only_in_labels)} excluded — {list(only_in_labels)}" if only_in_labels else "0 excluded"
+print(f"  Samples  : {X_.shape[0]} ({excl_note})")
 print(f"  Features : {X_.shape[1]} variant positions")
 print(f"  MDR      : {y_.sum()} positive / {(y_==0).sum()} negative")
 print(f"  Outputs  : {ML_OUT}/")

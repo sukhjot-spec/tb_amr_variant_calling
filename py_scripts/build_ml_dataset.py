@@ -231,9 +231,25 @@ meta_filt = meta[meta["variant_id"].isin(set(variants_final))].drop_duplicates("
 meta_filt.to_csv(os.path.join(ML_OUT, "variant_metadata_filtered.csv"), index=False)
 print(f"  variant_metadata_filtered.csv ({len(meta_filt):,} variants)")
 
-#Objective 1: Compensatory mutation summaries 
+#Objective 1: Compensatory mutation summaries
 print("\n  Building Objective 1 compensatory summaries...")
-comp = pd.read_csv(os.path.join(TB_OUT, "compensatory.csv"))
+
+# FIX (see conversation record): compensatory.csv's own MDR-conditional classification logic (collate.py) drops non-MDR carriers from the table
+# entirely for genes with requires_mdr=True - it's not a positional/join bug, it's compensatory.csv being the wrong INPUT for an MDR-vs-non-MDR
+# comparison. Verified directly: compensatory.csv's median non-MDR carrier count per mutation was 2 (mean 5.9, 27.5% of entries exactly 0) vs the
+# X_array.npy-matrix-based ground truth's median of 27 (mean 30.9, only 0.6% at 0) for the same variants. other_variants.csv has every sample's
+# genotype call unfiltered by MDR status - use that instead, restricted to the compensatory gene panel. rpoB is deliberately excluded from that
+# panel: its presence in compensatory.csv is entirely the separate non-RRDR-in-MDR-context pathway (verified identical to rpoB_nonRRDR.csv,
+# 1,335/1,335 rows match exactly), already loaded independently below via `rpob` - including it here would double-count against that and also
+# silently broaden the rpoB definition beyond what rpoB_nonRRDR.csv means
+
+
+comp_old = pd.read_csv(os.path.join(TB_OUT, "compensatory.csv"))
+comp_gene_panel = sorted(set(comp_old["gene"].unique()) - {"rpoB"})
+print(f"  Compensatory gene panel ({len(comp_gene_panel)} genes): {comp_gene_panel}")
+
+other = pd.read_csv(os.path.join(TB_OUT, "other_variants.csv"))
+comp = other[other["gene"].isin(comp_gene_panel)].copy()
 rpob = pd.read_csv(os.path.join(TB_OUT, "rpoB_nonRRDR.csv"))
 
 #restricting to samples in the aligned dataset only
@@ -249,8 +265,8 @@ total_non_mdr = len(non_mdr_set)
 comp_in_mdr  = comp[comp["sample_MDR"] == 1]
 comp_not_mdr = comp[comp["sample_MDR"] == 0]
 
-print(f"  Compensatory records in MDR samples     : {len(comp_in_mdr):,}")
-print(f"  Compensatory records in non-MDR samples : {len(comp_not_mdr):,}")
+print(f"  Compensatory-gene records in MDR samples     : {len(comp_in_mdr):,}")
+print(f"  Compensatory-gene records in non-MDR samples : {len(comp_not_mdr):,}")
 print(f"  rpoB non-RRDR in MDR samples            : {(rpob['sample_MDR']==1).sum():,}")
 print(f"  rpoB non-RRDR in non-MDR samples        : {(rpob['sample_MDR']==0).sum():,}")
 

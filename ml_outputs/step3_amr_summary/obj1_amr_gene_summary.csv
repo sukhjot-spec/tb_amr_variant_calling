@@ -1,6 +1,6 @@
 gene,n_mutation_drug_pairs,n_unique_mutations,n_drugs,total_unique_samples,max_mdr_freq,max_susc_freq,n_assoc_w_R,n_uncertain,n_RRDR,n_significant_FDR
 katG,25,25,1,760,0.8312,0.0365,8,14,0,2
-rpoB,67,34,2,426,0.442,0.0416,58,8,54,14
+rpoB,67,34,2,426,0.442,0.0415,58,8,54,14
 embB,26,26,1,377,0.4237,0.0243,11,9,0,13
 gyrA,22,11,2,321,0.3582,0.0091,20,2,0,18
 rrs,53,14,4,320,0.3617,0.0243,12,33,0,24

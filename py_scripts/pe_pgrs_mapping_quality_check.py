@@ -15,73 +15,50 @@ VCF_DIR    = os.path.join(BASE, "vcf_filtered")
 STEP5      = os.path.join(BASE, "ml_outputs", "step5_shap")
 CHROM_NAME = "Chromosome"
 OUT_DIR    = STEP5
+TOP100_CSV = os.path.join(STEP5, "obj2_shap_top100_annotated.csv")
 os.makedirs(OUT_DIR, exist_ok=True)
 
 
-# these are the target positions pulled directly from the real Step 5 output
-#    (obj2_shap_top100_annotated.csv): every PE_PGRS/PPE-family variant
-#    in the top 100 (42 positions) vs every primary-DR-gene variant in the top 100 (9 positions), used here as the confidence baseline.
-PE_PGRS_POSITIONS = {
-    3935771: "Chromosome_3935771_C_G (PE_PGRS54, rank 5)",
-    1636143: "Chromosome_1636143_G_T (PE_PGRS28, rank 11)",
-    839794:  "Chromosome_839794_C_T (PE_PGRS10, rank 12)",
-    3948347: "Chromosome_3948347_T_G (PE_PGRS57, rank 13)",
-    3947125: "Chromosome_3947125_C_G (PE_PGRS57, rank 14)",
-    3948362: "Chromosome_3948362_T_G (PE_PGRS57, rank 15)",
-    338648:  "Chromosome_338648_T_G (PE_PGRS4, rank 16)",
-    3738516: "Chromosome_3738516_C_CTGCCGCCGCTGCCGCCGT (PE_PGRS50, rank 18)",
-    3941723: "Chromosome_3941723_ACC_AC (PE_PGRS55, rank 24)",
-    3843678: "Chromosome_3843678_CACACCATGGTGA_C (PPE58, rank 27)",
-    1189773: "Chromosome_1189773_T_A (PE_PGRS19, rank 29)",
-    3940802: "Chromosome_3940802_A_G (PE_PGRS55, rank 30)",
-    839790:  "Chromosome_839790_C_A (PE_PGRS10, rank 35)",
-    839821:  "Chromosome_839821_G_C (PE_PGRS10, rank 42)",
-    1637228: "Chromosome_1637228_A_G (PE_PGRS28, rank 44)",
-    839271:  "Chromosome_839271_C_A (PE_PGRS10, rank 45)",
-    3732194: "Chromosome_3732194_A_G (PPE54, rank 50)",
-    3948417: "Chromosome_3948417_T_G (PE_PGRS57, rank 54)",
-    338669:  "Chromosome_338669_T_C (PE_PGRS4, rank 55)",
-    840217:  "Chromosome_840217_C_G (PE_PGRS10, rank 56)",
-    3934699: "Chromosome_3934699_G_A (PE_PGRS54, rank 61)",
-    3947128: "Chromosome_3947128_C_G (PE_PGRS57, rank 63)",
-    338618:  "Chromosome_338618_C_G (PE_PGRS4, rank 65)",
-    839295:  "Chromosome_839295_T_C (PE_PGRS10, rank 66)",
-    362466:  "Chromosome_362466_A_C (PE_PGRS5, rank 68)",
-    3738512: "Chromosome_3738512_A_G (PE_PGRS50, rank 69)",
-    338777:  "Chromosome_338777_G_C (PE_PGRS4, rank 72)",
-    3941516: "Chromosome_3941516_G_A (PE_PGRS55, rank 73)",
-    338719:  "Chromosome_338719_T_C (PE_PGRS4, rank 75)",
-    1864424: "Chromosome_1864424_G_C (PE_PGRS30, rank 78)",
-    840358:  "Chromosome_840358_C_G (PE_PGRS10, rank 79)",
-    839471:  "Chromosome_839471_T_C (PE_PGRS10, rank 80)",
-    1488434: "Chromosome_1488434_T_G (PE_PGRS24, rank 81)",
-    839291:  "Chromosome_839291_T_C (PE_PGRS10, rank 87)",
-    1637018: "Chromosome_1637018_G_C (PE_PGRS28, rank 88)",
-    3842452: "Chromosome_3842452_C_A (PPE57, rank 89)",
-    840430:  "Chromosome_840430_A_C (PE_PGRS10, rank 90)",
-    1488435: "Chromosome_1488435_C_A (PE_PGRS24, rank 95)",
-    337175:  "Chromosome_337175_G_A (PE_PGRS4, rank 96)",
-    338690:  "Chromosome_338690_A_G (PE_PGRS4, rank 98)",
-    424320:  "Chromosome_424320_T_TC (PPE7, rank 99)",
-    1339741: "Chromosome_1339741_C_G (PPE18, rank 100)",
-}
+# BUG FIX (see conversation record): this used to be two hardcoded dicts,
+# hand-transcribed from obj2_shap_top100_annotated.csv at some earlier
+# point. That snapshot went stale the moment Step 5 was rerun on the
+# corrected data -- every position/rank pairing in the old dicts matched
+# the OLD pre-fix top100 file and silently mismatched the current one
+# (e.g. position 840217 is genuinely rank 8 in the current top100, one of
+# the highest-priority features to check, but the stale dict labeled it
+# "rank 56", and 24 of the 33 real current PE_PGRS/PPE positions weren't
+# in the dict at all). Reading the CSV directly at runtime instead of
+# hardcoding a snapshot means this can't go stale again the next time
+# Step 5 reruns.
+def load_target_positions():
+    """Build {pos: label} dicts for PE_PGRS/PPE and primary-DR positions
+    directly from the current top100 file -- no hardcoded snapshot."""
+    if not os.path.exists(TOP100_CSV):
+        sys.exit(f"obj2_shap_top100_annotated.csv not found at {TOP100_CSV}\n"
+                  f"Run Step 5 (SHAP analysis) first, or edit TOP100_CSV above "
+                  f"if it lives elsewhere.")
+    df = pd.read_csv(TOP100_CSV)
 
-PRIMARY_DR_POSITIONS = {
-    2155168: "Chromosome_2155168_C_G (katG, rank 1)",
-    761155:  "Chromosome_761155_C_T (rpoB, rank 3)",
-    7570:    "Chromosome_7570_C_T (gyrA, rank 6)",
-    7581:    "Chromosome_7581_G_C (gyrA, rank 22)",
-    761110:  "Chromosome_761110_A_T (rpoB, rank 25)",
-    1473177: "Chromosome_1473177_G_A (rrs, rank 51)",
-    1472895: "Chromosome_1472895_C_T (rrs, rank 58)",
-    7582:    "Chromosome_7582_A_G (gyrA, rank 59)",
-    7362:    "Chromosome_7362_G_C (gyrA, rank 67)",
-}
+    def make_label(row):
+        return f"{row.variant_id} ({row.gene}, rank {row.rank})"
+
+    is_pe_ppe = df["gene"].str.contains("PE_PGRS|PPE", na=False)
+    pe_pgrs_df = df[is_pe_ppe]
+    primary_dr_df = df[df["is_primary_DR"] == 1]
+
+    pos_from_vid = lambda v: int(v.split("_")[1])
+    pe_pgrs_positions = {
+        pos_from_vid(r.variant_id): make_label(r) for r in pe_pgrs_df.itertuples()
+    }
+    primary_dr_positions = {
+        pos_from_vid(r.variant_id): make_label(r) for r in primary_dr_df.itertuples()
+    }
+    return pe_pgrs_positions, primary_dr_positions
 
 
-def build_regions_file(path: str):
+def build_regions_file(path: str, pe_pgrs_positions: dict, primary_dr_positions: dict):
     """One line per target position, 1-based, matching bcftools -R format."""
-    all_pos = sorted(set(PE_PGRS_POSITIONS) | set(PRIMARY_DR_POSITIONS))
+    all_pos = sorted(set(pe_pgrs_positions) | set(primary_dr_positions))
     with open(path, "w") as f:
         for pos in all_pos:
             f.write(f"{CHROM_NAME}\t{pos}\t{pos}\n")
@@ -155,17 +132,22 @@ def main():
         vcf_files = vcf_files[: args.max_samples]
     print(f"Found {len(vcf_files)} filtered VCF(s) to scan.")
 
+    pe_pgrs_positions, primary_dr_positions = load_target_positions()
+    print(f"Loaded target positions from {TOP100_CSV}: "
+          f"{len(pe_pgrs_positions)} PE_PGRS/PPE, {len(primary_dr_positions)} primary-DR "
+          f"(current top-100 ranks, not a hardcoded snapshot)")
+
     regions_path = os.path.join(OUT_DIR, "_pe_pgrs_check_regions.tsv")
-    n_positions = build_regions_file(regions_path)
+    n_positions = build_regions_file(regions_path, pe_pgrs_positions, primary_dr_positions)
     print(f"Querying {n_positions} target positions "
-          f"({len(PE_PGRS_POSITIONS)} PE_PGRS/PPE, {len(PRIMARY_DR_POSITIONS)} primary-DR)...")
+          f"({len(pe_pgrs_positions)} PE_PGRS/PPE, {len(primary_dr_positions)} primary-DR)...")
 
     records = []
     for i, vcf in enumerate(vcf_files, 1):
         sample_id = os.path.basename(vcf).replace(".filtered.vcf.gz", "").replace(".vcf.gz", "")
         for pos, qual, dp in query_one_vcf(vcf, regions_path):
-            group = ("PE_PGRS_PPE" if pos in PE_PGRS_POSITIONS
-                     else "Primary_DR" if pos in PRIMARY_DR_POSITIONS else None)
+            group = ("PE_PGRS_PPE" if pos in pe_pgrs_positions
+                     else "Primary_DR" if pos in primary_dr_positions else None)
             if group is None:
                 continue
             records.append({
@@ -185,7 +167,7 @@ def main():
     print(f"\nSaved raw per-call QUAL/DP: {raw_path} ({len(df):,} rows)")
 
     # - per-position summary -
-    label_map = {**PE_PGRS_POSITIONS, **PRIMARY_DR_POSITIONS}
+    label_map = {**pe_pgrs_positions, **primary_dr_positions}
     per_pos = df.groupby(["pos", "group"]).agg(
         n_calls=("qual", "size"),
         mean_qual=("qual", "mean"),

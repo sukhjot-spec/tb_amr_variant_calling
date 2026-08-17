@@ -1,1 +1,2 @@
 feature_idx,variant_id,mean_abs_shap,mean_shap,max_shap,min_shap,pct_nonzero,rank,gene,is_compensatory,is_primary_DR,gene_source
+31035,Chromosome_1416234_A_C,0.04711578,-0.0047525233,0.15076026,-0.08663803,100.0,54,embR,1,0,tbprofiler

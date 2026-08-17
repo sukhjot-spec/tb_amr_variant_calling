@@ -1,10 +1,6 @@
 consensus_rank,variant_id,shap_rank,rf_rank,ebm_rank,xgb_rank,mean_rank,gene,is_compensatory,is_primary_DR,gene_source
-1,Chromosome_2155168_C_G,1,1,7,9,3.0,katG,0,1,tbprofiler
-2,Chromosome_761155_C_T,3,7,9,999,6.3,rpoB,0,1,tbprofiler
-3,Chromosome_3478719_G_A,4,16,10,999,10.0,moaA1,0,0,gff
-4,Chromosome_2133475_A_G,10,9,25,999,14.7,Rv1883c,0,0,gff
-5,Chromosome_338648_T_G,16,2,28,999,15.3,PE_PGRS4,0,0,gff
-6,Chromosome_71584_C_CCGAGCGCTGTTCTGGCGCTAATCTGACGCTAGAATAG,21,15,12,999,16.0,intergenic,0,0,none
-7,Chromosome_1612606_T_C,9,22,19,999,16.7,Rv1435c,0,0,gff
-8,Chromosome_3336705_A_T,7,27,18,999,17.3,intergenic,0,0,none
-9,Chromosome_3478698_G_A,20,20,17,999,19.0,moaA1,0,0,gff
+1,Chromosome_2155168_C_G,1,1,1,13,1.0,katG,0,1,tbprofiler
+2,Chromosome_761155_C_T,2,2,2,999,2.0,rpoB,0,1,tbprofiler
+3,Chromosome_4247431_G_C,5,3,7,2,5.0,embB,0,1,tbprofiler
+4,Chromosome_1673425_C_T,3,11,4,999,6.0,inhA,0,1,tbprofiler
+5,Chromosome_4247429_A_G,4,17,5,5,8.7,embB,0,1,tbprofiler

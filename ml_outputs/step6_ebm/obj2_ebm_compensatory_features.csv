@@ -1,3 +1,1 @@
 rank,term_idx,term_type,n_features,feature_a,feature_b,importance,gene_a,gene_b,is_compensatory,is_primary_DR,gene_source_a,gene_source_b
-49,1652,main_effect,1,Chromosome_1416234_A_C,,0.015902929245189552,embR,,1,0,tbprofiler,
-71,1651,main_effect,1,Chromosome_1416232_A_G,,0.014458157615180232,embR,,1,0,tbprofiler,

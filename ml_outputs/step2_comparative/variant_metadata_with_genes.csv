@@ -91758,7 +91758,7 @@ Chromosome_498531_A_G,Chromosome,498531,A,G,Rv0412c,gff,0,0
 Chromosome_2406842_AC_A,Chromosome,2406842,AC,A,Rv2147c,gff,0,0
 Chromosome_1475716_A_G,Chromosome,1475716,A,G,rrl,tbprofiler,0,0
 Chromosome_1276842_G_A,Chromosome,1276842,G,A,Rv1148c,gff,0,0
-Chromosome_779181_CG_CGG,Chromosome,779181,CG,CGG,Rv0678,gff,0,1
+Chromosome_779181_CG_CGG,Chromosome,779181,CG,CGG,Rv0678,gff,1,0
 Chromosome_3895281_T_C,Chromosome,3895281,T,C,PPE60,gff,0,0
 Chromosome_3930476_A_C,Chromosome,3930476,A,C,PE_PGRS53,gff,0,0
 Chromosome_2793360_C_T,Chromosome,2793360,C,T,lipQ,gff,0,0

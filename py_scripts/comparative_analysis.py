@@ -47,20 +47,33 @@ GENE_ANNOTATION_PATH = os.path.join(STEP2_OUT, "variant_metadata_with_genes.csv"
 CONFLICTS_PATH       = os.path.join(STEP2_OUT, "gene_annotation_conflicts.csv")
 
 COMPENSATORY_GENES = {
-    "rpoA", "rpoC",           # rifampicin fitness compensation
-    "ahpC", "kasA", "ndh",   # isoniazid pathway
-    "gyrB",                   # fluoroquinolone pathway
-    "gid",                    # streptomycin pathway
-    "mmpR5", "mmpL5",        # bedaquiline/clofazimine efflux
-    "embR",                   # ethambutol pathway
-    "whiB7", "eis",          # broad fitness restorers
+    "rpoA", "rpoC",              # rifampicin fitness compensation
+    "ahpC", "kasA", "ndh",       # isoniazid pathway
+    "gyrB",                      # fluoroquinolone pathway
+    "gid",                       # streptomycin pathway
+    "mmpR5", "Rv0678", "mmpL5",  # bedaquiline/clofazimine efflux -- Rv0678 is mmpR5's
+                                  # systematic locus tag. The GFF has no "mmpR5" gene
+                                  # symbol at this locus (only Name=Rv0678), so
+                                  # GFF-fallback-annotated variants here resolve to
+                                  # "Rv0678" while TB-Profiler-covered ones resolve to
+                                  # "mmpR5" -- same gene, must classify identically.
+                                  # collate.py already treats mmpR5 as compensatory
+                                  # (with its own borderline/manual-review caveat);
+                                  # this alias keeps that call consistent everywhere.
+    "embR",                      # ethambutol pathway
+    "whiB7", "eis",              # broad fitness restorers
 }
 
 #tracking rpoB non-RRDR separately
 PRIMARY_DR_GENES = {
     "rpoB", "katG", "inhA", "embB", "embA", "embC", "pncA", "gyrA",
-    "rrs", "rpsL", "tlyA", "rplC", "fgd1", "dprE1", "pepQ", "Rv0678",
+    "rrs", "rpsL", "tlyA", "rplC", "fgd1", "dprE1", "pepQ",
     "atpE", "ethA",
+    # Rv0678 removed -- it's mmpR5's locus tag (see COMPENSATORY_GENES above), not a
+    # distinct primary-DR gene. It was being counted as primary-DR here while the
+    # same gene, under its TB-Profiler name "mmpR5", was simultaneously counted as
+    # compensatory a few lines up -- same variant could get either label depending
+    # on which annotation source (TB-Profiler vs GFF) happened to cover its position.
 }
 
 print("Comparative Genomic Analysis (MDR vs Susceptible)")

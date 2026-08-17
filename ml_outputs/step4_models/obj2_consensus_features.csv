@@ -1,0 +1,12 @@
+consensus_rank,variant_id,rf_rank,xgb_rank,ebm_rank,mean_rank
+1,Chromosome_2155168_C_G,1,6,1,2.7
+2,Chromosome_4247431_G_C,3,2,7,4.0
+3,Chromosome_4247429_A_G,17,3,5,8.3
+4,Chromosome_761155_C_T,2,38,2,14.0
+5,Chromosome_1673425_C_T,11,41,4,18.7
+6,Chromosome_7570_C_T,71,21,6,32.7
+7,Chromosome_7582_A_G,56,47,8,37.0
+8,Chromosome_761110_A_T,92,17,3,37.3
+9,Chromosome_1532777_T_C,16,54,52,40.7
+10,Chromosome_1473246_A_G,75,43,70,62.7
+11,Chromosome_1634586_T_C,48,64,77,63.0

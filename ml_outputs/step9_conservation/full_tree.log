@@ -1,0 +1,123 @@
+IQ-TREE multicore version 2.4.0 for Linux x86 64-bit built Feb 12 2025
+Developed by Bui Quang Minh, Nguyen Lam Tung, Olga Chernomor, Heiko Schmidt,
+Dominik Schrempf, Michael Woodhams, Ly Trong Nhan, Thomas Wong
+
+Host:    Burstrage-Laptop (AVX2, FMA3, 7 GB RAM)
+Command: iqtree2 -s /home/sukhjot/tb_pipeline/ml_outputs/step9_conservation/binary_alignment.fasta -st BIN -m GTR2 -fast -nt 1 -pre /home/sukhjot/tb_pipeline/ml_outputs/step9_conservation/full_tree -redo
+Seed:    983378 (Using SPRNG - Scalable Parallel Random Number Generator)
+Time:    Wed Aug 19 13:55:19 2026
+Kernel:  AVX+FMA - 1 threads (16 CPU cores detected)
+
+HINT: Use -nt option to specify number of threads because your CPU has 16 cores!
+HINT: -nt AUTO will automatically determine the best number of threads to use.
+
+Reading alignment file /home/sukhjot/tb_pipeline/ml_outputs/step9_conservation/binary_alignment.fasta ... Fasta format detected
+Reading fasta file: done in 2.52864 secs using 100.1% CPU
+Alignment most likely contains binary sequences
+Alignment has 1858 sequences with 93615 columns, 30004 distinct patterns
+93615 parsimony-informative, 0 singleton sites, 0 constant sites
+Analyzing sequences: done in 0.749802 secs using 105% CPU
+NOTE: 31 identical sequences (see below) will be ignored for subsequent analysis
+Alignment was printed to /home/sukhjot/tb_pipeline/ml_outputs/step9_conservation/full_tree.uniqueseq.phy
+
+For your convenience alignment with unique sequences printed to /home/sukhjot/tb_pipeline/ml_outputs/step9_conservation/full_tree.uniqueseq.phy
+Creating fast initial parsimony tree by random order stepwise addition...
+81.09 seconds, parsimony score: 480890 (based on 93615 sites)
+
+NOTE: 941 MB RAM (0 GB) is required!
+WARNING: Memory required per CPU-core (0.919069 GB) is higher than your computer RAM per CPU-core (0 GB), thus multiple runs may exceed RAM!
+Estimate model parameters (epsilon = 0.50)
+1. Initial log-likelihood: -4311428.95
+2. Current log-likelihood: -2489362.28
+3. Current log-likelihood: -2469703.50
+4. Current log-likelihood: -2465517.52
+5. Current log-likelihood: -2461893.75
+6. Current log-likelihood: -2458776.77
+7. Current log-likelihood: -2456084.69
+8. Current log-likelihood: -2453778.80
+9. Current log-likelihood: -2451814.92
+10. Current log-likelihood: -2450145.73
+11. Current log-likelihood: -2448733.11
+12. Current log-likelihood: -2447554.13
+13. Current log-likelihood: -2446578.74
+14. Current log-likelihood: -2445775.31
+15. Current log-likelihood: -2445121.54
+16. Current log-likelihood: -2444592.50
+17. Current log-likelihood: -2444165.14
+18. Current log-likelihood: -2443823.97
+19. Current log-likelihood: -2443552.83
+20. Current log-likelihood: -2443338.75
+21. Current log-likelihood: -2443167.18
+22. Current log-likelihood: -2443034.11
+23. Current log-likelihood: -2442931.71
+24. Current log-likelihood: -2442853.50
+25. Current log-likelihood: -2442794.15
+26. Current log-likelihood: -2442749.36
+27. Current log-likelihood: -2442715.70
+28. Current log-likelihood: -2442690.51
+29. Current log-likelihood: -2442671.73
+30. Current log-likelihood: -2442657.76
+31. Current log-likelihood: -2442647.42
+32. Current log-likelihood: -2442639.77
+33. Current log-likelihood: -2442633.74
+34. Current log-likelihood: -2442629.67
+35. Current log-likelihood: -2442626.69
+36. Current log-likelihood: -2442624.50
+37. Current log-likelihood: -2442622.92
+38. Current log-likelihood: -2442621.75
+39. Current log-likelihood: -2442620.85
+40. Current log-likelihood: -2442620.18
+Optimal log-likelihood: -2442619.52
+State frequencies:  0: 0.893  1: 0.107
+Parameters optimization took 40 rounds (530.093 sec)
+Wrote distance file to... 
+Computing ML distances based on estimated model parameters...
+Calculating distance matrix: done in 170.83 secs using 109.1% CPU
+Computing ML distances took 171.493725 sec (of wall-clock time) 187.066049 sec (of CPU time)
+WARNING: Some pairwise ML distances are too long (saturated)
+Setting up auxiliary I and S matrices: done in 0.0788572 secs using 197.6% CPU
+Computing RapidNJ tree took 0.291370 sec (of wall-clock time) 0.597231 sec (of CPU time)
+Log-likelihood of RapidNJ tree: -2471136.019
+--------------------------------------------------------------------
+|             INITIALIZING CANDIDATE TREE SET                      |
+--------------------------------------------------------------------
+
+Do NNI search on 2 best initial trees
+Estimate model parameters (epsilon = 0.500)
+BETTER TREE FOUND at iteration 1: -2412196.671
+Finish initializing candidate tree set (4)
+Current best tree score: -2412196.671 / CPU time: 380.024
+Number of iterations: 2
+TREE SEARCH COMPLETED AFTER 2 ITERATIONS / Time: 0h:21m:15s
+
+--------------------------------------------------------------------
+|                    FINALIZING TREE SEARCH                        |
+--------------------------------------------------------------------
+Performs final model parameters optimization
+Estimate model parameters (epsilon = 0.050)
+1. Initial log-likelihood: -2412196.671
+2. Current log-likelihood: -2412196.559
+3. Current log-likelihood: -2412196.184
+4. Current log-likelihood: -2412195.948
+5. Current log-likelihood: -2412195.815
+6. Current log-likelihood: -2412195.741
+7. Current log-likelihood: -2412195.685
+Optimal log-likelihood: -2412195.632
+State frequencies:  0: 0.911  1: 0.089
+Parameters optimization took 7 rounds (43.559 sec)
+BEST SCORE FOUND : -2412195.632
+Total tree length: 9.651
+
+Total number of iterations: 2
+CPU time used for tree search: 413.332 sec (0h:6m:53s)
+Wall-clock time used for tree search: 380.029 sec (0h:6m:20s)
+Total CPU time used: 1433.827 sec (0h:23m:53s)
+Total wall-clock time used: 1319.044 sec (0h:21m:59s)
+
+Analysis results written to: 
+  IQ-TREE report:                /home/sukhjot/tb_pipeline/ml_outputs/step9_conservation/full_tree.iqtree
+  Maximum-likelihood tree:       /home/sukhjot/tb_pipeline/ml_outputs/step9_conservation/full_tree.treefile
+  Likelihood distances:          /home/sukhjot/tb_pipeline/ml_outputs/step9_conservation/full_tree.mldist
+  Screen log file:               /home/sukhjot/tb_pipeline/ml_outputs/step9_conservation/full_tree.log
+
+Date and Time: Wed Aug 19 14:19:32 2026

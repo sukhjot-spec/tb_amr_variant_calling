@@ -30,6 +30,8 @@ ml_outputs/step2_comparative/gene_annotation_conflicts.csv
 ml_outputs/step4_models/trained_models
 ml_outputs/step5_shap/shap_values.npy
 ml_outputs/step5_shap/gene_annotation_conflicts.csv
+ml_outputs/step9_conservation/binary_alignment.fasta
+ml_outputs/step9_conservation/full_tree.uniqueseq.phy
 
 intermediate_data/
 

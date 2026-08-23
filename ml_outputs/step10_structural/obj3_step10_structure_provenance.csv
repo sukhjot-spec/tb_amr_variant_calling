@@ -1,0 +1,11 @@
+gene,uniprot_accession,structure_source,structure_id,residue_coverage
+ahpC,P9WQB7,PDB,2BMX,5/5
+eis,P9WFK7,PDB,6X6I,1/1
+embR,P9WGJ9,PDB,2FF4,3/3
+gid,P9WGW9,PDB,7CFE,4/4
+gyrB,P9WG45,PDB,3M4I,2/8
+kasA,P9WQD9,PDB,6P9K,10/10
+mmpL5,P9WJV1,PDB,8ZKP,9/9
+ndh,P95160,AlphaFold,P95160,9/9
+rpoA,P9WGZ1,PDB,7KIN,6/10
+rpoC,P9WGY7,PDB,7KIN,20/20

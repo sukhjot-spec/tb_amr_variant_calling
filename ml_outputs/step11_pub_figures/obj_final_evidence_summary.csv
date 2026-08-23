@@ -1,0 +1,6 @@
+tier,count,pct_of_1209
+Flagged anomaly - requires caveat,1,0.1
+"Strong, convergent, lineage-consistent",352,29.1
+Convergent but lineage-restricted,33,2.7
+Single-origin (clonal inheritance only),243,20.1
+Not conservation-tested (unresolved position),580,48.0

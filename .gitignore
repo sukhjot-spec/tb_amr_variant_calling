@@ -32,6 +32,7 @@ ml_outputs/step5_shap/shap_values.npy
 ml_outputs/step5_shap/gene_annotation_conflicts.csv
 ml_outputs/step9_conservation/binary_alignment.fasta
 ml_outputs/step9_conservation/full_tree.uniqueseq.phy
+ml_outputs/step11_inputs
 
 intermediate_data/
 
